@@ -1,5 +1,4 @@
-import { SubscriptionRepository, Subscription } from "./subscriptions.ts"
-const AnyProperty = Symbol("AnyProperty")
+import { SubscriptionRepository, Subscription, AnyProperty } from "./subscriptions.ts"
 
 export class ObservableObject {
     __subs = new SubscriptionRepository
@@ -18,7 +17,11 @@ export class ObservableObject {
     subscribe(prop:string, changeFunc:(newVal:any) => void):Subscription {
         return this.__subs.add(prop, changeFunc)
     }
-}
+
+    subscribeToAllChanges(changeFunc:()=>void):Subscription {
+        return this.__subs.add(AnyProperty, changeFunc)        
+    }
+ }
 
 class ObservableTraps {
     get(target:ObservableObject, p:string|symbol, receiver) {

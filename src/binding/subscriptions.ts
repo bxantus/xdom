@@ -7,6 +7,8 @@ export interface Subscriber<T> {
     onChange(newVal:T):void
 }
 
+export const AnyProperty = Symbol("AnyProperty")
+
 /**
  * Use SubscriptionRepository inside your model classes (classes representing data, which can change, and users are intreseted in changes. See the Observer pattern).
  * Note, that a one to one relationship between object properties and properties registered in subscriptionrepository isn't needed.
@@ -20,7 +22,11 @@ export class SubscriptionRepository {
     // ex.: getSubscription<MyuSuperType>("alma")
     //      user codes could write: {  get onAlma() { return  this.subs.getSubscription<AlmaType>() } }
 
-    add(name:string, changeFunc:(newVal:any) => void):Subscription {
+    /**
+     * NOTE: Use the special `AnyProperty` symbol to install change functions for any property change.
+     *       In that case newVal won't be provided for the changefunc
+     */
+    add(name:string|symbol, changeFunc:(newVal:any) => void):Subscription {
         let subsForName = this.subs.get(name) || []
         if (subsForName.length == 0) {
             this.subs.set(name, subsForName)
@@ -38,11 +44,14 @@ export class SubscriptionRepository {
     }
 
     notifyFor(name:string, newVal:any) {
-        let subsForName = this.subs.get(name)
+        const subsForName = this.subs.get(name)
         if (subsForName)
             for (let s of subsForName) s.onChange(newVal)
+        const anyPropSubs = this.subs.get(AnyProperty)
+        if (anyPropSubs)
+            for (let s of anyPropSubs) s.onChange(undefined)
     }
 
-    private subs = new Map<string, Subscriber<any>[]>()
+    private subs = new Map<string|symbol, Subscriber<any>[]>()
 }
 
