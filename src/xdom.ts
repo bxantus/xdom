@@ -6,6 +6,7 @@ interface ElementProps {
     class?: string
     innerText?:string
     onClick?:(ev: MouseEvent)=>void
+    src?:string /// used by img elements
 }
 
 export function el(tagname:TagNames, props?:ElementProps, children?:(HTMLElement|string)[]) {
@@ -16,6 +17,8 @@ export function el(tagname:TagNames, props?:ElementProps, children?:(HTMLElement
         element.innerText = props.innerText
     if (props?.onClick)
         element.onclick = props.onClick
+    if (props?.src && element instanceof HTMLImageElement)
+        element.src = props.src
     if (children)
         element.append(...children)
     return element
