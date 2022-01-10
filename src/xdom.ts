@@ -24,6 +24,15 @@ export function el(tagname:TagNames, props?:ElementProps, children?:(HTMLElement
     return element
 } 
 
+/// timeout used to schedule a class change to start a transition
+/// right after the element is added to DOM
+/// timeout is needed, so browsers don't cache and merge style changes right after creating the element
+const INITIAL_CLASS_CHANGE_TIMEOUT = 50 // NOTE: not sure if timeuts smaller than this, will work
+
 export function scheduleTransitionByClassChange(el:HTMLElement, className:string) {
-    setTimeout(()=> el.classList.toggle(className), 50) // NOTE: not sure if timeuts smaller than this, will work
+    setTimeout(()=> el.classList.toggle(className), INITIAL_CLASS_CHANGE_TIMEOUT) 
+}
+
+export function scheduleTransition(func:()=>any) {
+    setTimeout(func, INITIAL_CLASS_CHANGE_TIMEOUT) 
 }
