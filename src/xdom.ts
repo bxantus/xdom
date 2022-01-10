@@ -23,3 +23,7 @@ export function el(tagname:TagNames, props?:ElementProps, children?:(HTMLElement
         element.append(...children)
     return element
 } 
+
+export function scheduleTransitionByClassChange(el:HTMLElement, className:string) {
+    setTimeout(()=> el.classList.toggle(className), 50) // NOTE: not sure if timeuts smaller than this, will work
+}
