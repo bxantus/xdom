@@ -3,30 +3,33 @@ export interface Subscription {
     dispose():void
 }
 
-export interface Subscriber<T> {
-    onChange(newVal:T):void
+interface Subscriber {
+    onChange():any
+}
+
+export interface Observable {
+    subscribe(subscriber:()=>any):Subscription
 }
 
 export const AnyProperty = Symbol("AnyProperty")
 
+type PropChanges<Props extends string> = {
+    [key in Props]:Observable
+}
+
 /**
  * Use SubscriptionRepository inside your model classes (classes representing data, which can change, and users are intreseted in changes. See the Observer pattern).
  * Note, that a one to one relationship between object properties and properties registered in subscriptionrepository isn't needed.
- * You can have computed properties (not requiring storage), but changes may be fired for them as well using SubscriptionRepositor.
+ * You can have computed properties (not requiring storage), but changes may be fired for them as well using SubscriptionRepository.
  * 
  * The data structure used tries to use limited memory space if no subscriptions are used, or if there are only subscriptions to a few properties.  
  */
-export class SubscriptionRepository {
-    // todo: add a generic getter function for the given properties, using T type
-    //       this will ensure users with correct types, and they don't have to type strings
-    // ex.: getSubscription<MyuSuperType>("alma")
-    //      user codes could write: {  get onAlma() { return  this.subs.getSubscription<AlmaType>() } }
-
+export class SubscriptionRepository<Props extends string> {
+    
     /**
      * NOTE: Use the special `AnyProperty` symbol to install change functions for any property change.
-     *       In that case newVal won't be provided for the changefunc
      */
-    add(name:string|symbol, changeFunc:(newVal:any) => void):Subscription {
+    add(name:string|symbol, changeFunc:() => any):Subscription {
         let subsForName = this.subs.get(name) || []
         if (subsForName.length == 0) {
             this.subs.set(name, subsForName)
@@ -43,15 +46,30 @@ export class SubscriptionRepository {
         }
     }
 
-    notifyFor(name:string, newVal:any) {
-        const subsForName = this.subs.get(name)
-        if (subsForName)
-            for (let s of subsForName) s.onChange(newVal)
+    notifyFor(...names:Props[]) {
+        for (const name of names) {
+            const subsForName = this.subs.get(name)
+            if (subsForName)
+                for (let s of subsForName) s.onChange()
+        }
         const anyPropSubs = this.subs.get(AnyProperty)
         if (anyPropSubs)
-            for (let s of anyPropSubs) s.onChange(undefined)
+            for (let s of anyPropSubs) s.onChange()
     }
 
-    private subs = new Map<string|symbol, Subscriber<any>[]>()
+    get changes():PropChanges<Props> {
+        return this.changesProxy
+    }
+
+    private subs = new Map<string|symbol, Subscriber[]>()
+    private changesProxy = new Proxy(this as any, {
+        get(target:SubscriptionRepository<Props>, p:string|symbol):Observable {
+            return {
+                subscribe(subscriber:()=>any) {
+                    return target.add(p, subscriber)
+                }
+            }
+        }
+    }) 
 }
 
