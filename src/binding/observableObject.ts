@@ -1,7 +1,15 @@
 import { SubscriptionRepository, Subscription, AnyProperty } from "./subscriptions.ts"
 
+// todo: - add generic type parameter to observable object
+//       - extract create function from inside
+//       - add changes interface to created objects
+// This can be a great tool for creating simple observable dictionary objects, conforming to a given interface
+
 export class ObservableObject {
     __subs = new SubscriptionRepository
+
+    get changes() { return this.__subs.changes }
+
     private constructor() {
 
     }
@@ -12,14 +20,6 @@ export class ObservableObject {
             (oo as any)[key] = initialProps[key]
         }
         return new Proxy(oo, observableTraps) as (ObservableObject & T)
-    }
-
-    subscribe(prop:string, changeFunc:(newVal:any) => void):Subscription {
-        return this.__subs.add(prop, changeFunc)
-    }
-
-    subscribeToAllChanges(changeFunc:()=>void):Subscription {
-        return this.__subs.add(AnyProperty, changeFunc)        
     }
  }
 
