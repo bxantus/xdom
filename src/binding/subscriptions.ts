@@ -8,6 +8,8 @@ interface Subscriber {
 }
 
 export interface Observable {
+    // todo: subscribe should have options, like update should be fired right away or only at first change
+    //       many usages (like simple user made bindings  would like for updates to fire at subscription time)
     subscribe(subscriber:()=>any):Subscription
 }
 
