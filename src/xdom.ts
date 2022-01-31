@@ -1,28 +1,43 @@
 // DOM related utility library
+import { Binding, BindingOrValue, bind, BindingRepository } from "./models/binding.ts"
 
 type TagNames = keyof HTMLElementTagNameMap
 
 interface ElementProps {
-    class?: string
-    innerText?:string
+    class?: BindingOrValue<string>
+    innerText?:BindingOrValue<string>
     onClick?:(ev: MouseEvent)=>void
-    src?:string /// used by img elements
+    src?:BindingOrValue<string> /// used by img elements
 }
+
+const bindingRepo = new BindingRepository<HTMLElement>()
 
 export function el(tagname:TagNames, props?:ElementProps, children?:(HTMLElement|string)[]) {
     const element = document.createElement(tagname)
     if (props?.class)
-        element.className = props.class
+        bindingRepo.add(element, bind(element, "className", props.class))
     if (props?.innerText)
-        element.innerText = props.innerText
+        bindingRepo.add(element, bind(element, "innerText", props.innerText))
     if (props?.onClick)
         element.onclick = props.onClick
     if (props?.src && element instanceof HTMLImageElement)
-        element.src = props.src
+        bindingRepo.add(element, bind(element, "src", props.src))
     if (children)
         element.append(...children)
     return element
 } 
+
+export function clearBindings(e:HTMLElement) {
+    bindingRepo.clearBindings(e)
+}
+
+export function clearBindingsOfTree(root:HTMLElement) {
+    clearBindings(root)
+    for (let child = root.firstElementChild; child && child instanceof HTMLElement ; child = child.nextElementSibling) {
+        clearBindingsOfTree(child)
+    }
+}
+
 
 /// timeout used to schedule a class change to start a transition
 /// right after the element is added to DOM

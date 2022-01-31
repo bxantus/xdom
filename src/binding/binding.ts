@@ -69,7 +69,29 @@ export function getValue<T>(v:BindingOrValue<T>):T {
 
 export function bind<V, Target>(target:Target, prop:KeysMatching<Target, V>, v:BindingOrValue<V>) {
     if (v === undefined) return
-    if (v instanceof Binding) 
+    if (v instanceof Binding) {
         v.bindTo(target, prop)
+        return v
+    }
     else (target as any)[prop] = v
+}
+
+export class BindingRepository<K> {
+    bindings = new Map<K, Binding<any>[]>()
+
+    add(obj:K, binding:Binding<any>|undefined) {
+        if (!binding) return
+        const list = this.bindings.get(obj)
+        if (!list) {
+            this.bindings.set(obj, [binding])
+        } else list.push(binding)
+    }
+
+    clearBindings(obj:K) {
+        const list = this.bindings.get(obj)
+        if (!list) return 
+        for (const b of list) 
+            b.dispose()
+        this.bindings.delete(obj)
+    }
 }
