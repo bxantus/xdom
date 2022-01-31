@@ -67,10 +67,11 @@ export function getValue<T>(v:BindingOrValue<T>):T {
     return v instanceof Binding ? v.compute() : v
 }
 
-export function bind<V, Target>(target:Target, prop:KeysMatching<Target, V>, v:BindingOrValue<V>) {
+export function bind<V, Target>(target:Target, prop:KeysMatching<Target, V>, v:BindingOrValue<V>, repo?:BindingRepository<any>) {
     if (v === undefined) return
     if (v instanceof Binding) {
         v.bindTo(target, prop)
+        repo?.add(target, v)
         return v
     }
     else (target as any)[prop] = v

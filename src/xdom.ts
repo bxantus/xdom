@@ -15,13 +15,13 @@ const bindingRepo = new BindingRepository<HTMLElement>()
 export function el(tagname:TagNames, props?:ElementProps, children?:(HTMLElement|string)[]) {
     const element = document.createElement(tagname)
     if (props?.class)
-        bindingRepo.add(element, bind(element, "className", props.class))
+        bind(element, "className", props.class, bindingRepo)
     if (props?.innerText)
-        bindingRepo.add(element, bind(element, "innerText", props.innerText))
+        bind(element, "innerText", props.innerText, bindingRepo)
     if (props?.onClick)
         element.onclick = props.onClick
     if (props?.src && element instanceof HTMLImageElement)
-        bindingRepo.add(element, bind(element, "src", props.src))
+        bind(element, "src", props.src, bindingRepo)
     if (children)
         element.append(...children)
     return element
