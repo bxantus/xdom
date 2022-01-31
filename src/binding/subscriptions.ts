@@ -13,10 +13,14 @@ export interface Observable {
     subscribe(subscriber:()=>any):Subscription
 }
 
-export const AnyProperty = Symbol("AnyProperty")
+export const any = Symbol("AnyProperty")
 
-type PropChanges<Props extends string> = {
+export type PropChanges<Props extends string> = {
     [key in Props]:Observable
+}
+
+export interface AnyPropChange {
+    [any]:Observable
 }
 
 /**
@@ -29,7 +33,7 @@ type PropChanges<Props extends string> = {
 export class SubscriptionRepository<Props extends string> {
     
     /**
-     * NOTE: Use the special `AnyProperty` symbol to install change functions for any property change.
+     * NOTE: Use the special `any` symbol to install change functions for any property change.
      */
     add(name:string|symbol, changeFunc:() => any):Subscription {
         let subsForName = this.subs.get(name) || []
@@ -54,12 +58,12 @@ export class SubscriptionRepository<Props extends string> {
             if (subsForName)
                 for (let s of subsForName) s.onChange()
         }
-        const anyPropSubs = this.subs.get(AnyProperty)
+        const anyPropSubs = this.subs.get(any)
         if (anyPropSubs)
             for (let s of anyPropSubs) s.onChange()
     }
 
-    get changes():PropChanges<Props> {
+    get changes():PropChanges<Props> & AnyPropChange {
         return this.changesProxy
     }
 

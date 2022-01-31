@@ -1,34 +1,34 @@
-import { SubscriptionRepository, Subscription, AnyProperty } from "./subscriptions.ts"
+import { SubscriptionRepository, type PropChanges, AnyPropChange } from "./subscriptions.ts"
+export { any } from './subscriptions.ts'
 
-// todo: - add generic type parameter to observable object
-//       - extract create function from inside
-//       - add changes interface to created objects
-// This can be a great tool for creating simple observable dictionary objects, conforming to a given interface
+export function makeObservable<T>(initialProps:T):Observable<T> {
+    const oo = new ObservableObject()
+    for (const key in initialProps) {
+        (oo as any)[key] = initialProps[key]
+    }
+    return new Proxy(oo, observableTraps) as (ObservableObject & T & AnyPropChange)
+}
 
-export class ObservableObject {
+export type Observable<T> = {
+    $changes:PropChanges<keyof T & string> & AnyPropChange
+} & T 
+
+class ObservableObject {
     __subs = new SubscriptionRepository
 
-    get changes() { return this.__subs.changes }
+    get $changes() { return this.__subs.changes }
 
-    private constructor() {
+    constructor() {
 
-    }
-
-    static create<T>(initialProps:T):ObservableObject & T {
-        const oo = new ObservableObject()
-        for (const key in initialProps) {
-            (oo as any)[key] = initialProps[key]
-        }
-        return new Proxy(oo, observableTraps) as (ObservableObject & T)
-    }
+    }    
  }
 
 class ObservableTraps {
-    get(target:ObservableObject, p:string|symbol, receiver) {
+    get(target:any, p:string|symbol, receiver:any) {
         return target[p]
     }
 
-    set(target:ObservableObject, p:string|symbol, value:any, receiver) {
+    set(target:any, p:string|symbol, value:any, receiver:any) {
         const old = target[p]
         if (old != value) {
             target[p] = value
