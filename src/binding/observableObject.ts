@@ -13,6 +13,10 @@ export type Observable<T> = {
     $changes:PropChanges<keyof T & string> & AnyPropChange
 } & T 
 
+export type MaybeObservable<T> = {
+    $changes?:PropChanges<keyof T & string> & AnyPropChange
+} & T 
+
 class ObservableObject {
     __subs = new SubscriptionRepository
 
