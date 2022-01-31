@@ -7,9 +7,13 @@ interface Subscriber {
     onChange():any
 }
 
+// use the `triggered` wrapper/modifier for a subscriber to trigger the subscriber right befor subscribing
+export function triggered(subscriber:()=>any) {
+    subscriber()
+    return subscriber
+}
+
 export interface Observable {
-    // todo: subscribe should have options, like update should be fired right away or only at first change
-    //       many usages (like simple user made bindings  would like for updates to fire at subscription time)
     subscribe(subscriber:()=>any):Subscription
 }
 
