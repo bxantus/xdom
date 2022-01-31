@@ -4,6 +4,9 @@ import { dispose } from "../base.ts"
 type valueFunction<T> = ()=>T
 type updateFunction<T> = (val:T) => any
 
+// see: https://stackoverflow.com/a/54520829, keys of T having type of V
+type KeysMatching<T, V> = {[K in keyof T]-?: T[K] extends V ? K : never}[keyof T];
+
 export class Binding<T> {
     private valueFunction:valueFunction<T>
     private update?:updateFunction<T>
@@ -31,6 +34,10 @@ export class Binding<T> {
             this.refresh() // refresh
     }
 
+    bindTo<Target>(target:Target, prop:KeysMatching<Target, T>) {
+        this.onUpdate(v => (target as any)[prop] = v)
+    }
+
     /**
      * List additional observables, which will be watched for changes
      */
@@ -49,6 +56,20 @@ export class Binding<T> {
     }
 }
 
-export function bind<T>(valueFunction:valueFunction<T>, ...observables:(Observable|undefined)[]):Binding<T> {
+
+export function binding<T>(valueFunction:valueFunction<T>, ...observables:(Observable|undefined)[]):Binding<T> {
     return new Binding(valueFunction, ...observables)
+}
+
+export type BindingOrValue<T> = Binding<T> | T
+
+export function getValue<T>(v:BindingOrValue<T>):T {
+    return v instanceof Binding ? v.compute() : v
+}
+
+export function bind<V, Target>(target:Target, prop:KeysMatching<Target, V>, v:BindingOrValue<V>) {
+    if (v === undefined) return
+    if (v instanceof Binding) 
+        v.bindTo(target, prop)
+    else (target as any)[prop] = v
 }
