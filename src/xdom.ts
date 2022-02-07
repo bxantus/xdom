@@ -4,6 +4,7 @@ import { Binding, BindingOrValue, bind, BindingRepository } from "./models/bindi
 type TagNames = keyof HTMLElementTagNameMap
 
 interface ElementProps {
+    id?:string
     class?: BindingOrValue<string>
     innerText?:BindingOrValue<string>
     onClick?:(ev: MouseEvent)=>void
@@ -14,6 +15,8 @@ const bindingRepo = new BindingRepository<HTMLElement>()
 
 export function el(tagname:TagNames, props?:ElementProps, children?:(HTMLElement|string)[]) {
     const element = document.createElement(tagname)
+    if (props?.id)
+        element.id = props.id
     if (props?.class)
         bind(element, "className", props.class, bindingRepo)
     if (props?.innerText)
