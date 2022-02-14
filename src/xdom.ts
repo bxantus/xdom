@@ -31,6 +31,17 @@ export function el(tagname:TagNames, props?:ElementProps, children?:(HTMLElement
         element.append(...children)
     return element
 } 
+export function div(props:ElementProps, ...children:(HTMLElement|string)[]) {
+    return el("div", props, children) as HTMLDivElement
+}
+
+export function span(props:ElementProps, ...children:(HTMLElement|string)[]) {
+    return el("span", props, children) as HTMLSpanElement
+}
+
+export function img(props:ElementProps, ...children:(HTMLElement|string)[]) {
+    return el("img", props, children) as HTMLImageElement
+}
 
 export function clearBindings(e:HTMLElement) {
     bindingRepo.clearBindings(e)
@@ -55,4 +66,22 @@ export function scheduleTransitionByClassChange(el:HTMLElement, className:string
 
 export function scheduleTransition(func:()=>any) {
     setTimeout(func, INITIAL_CLASS_CHANGE_TIMEOUT) 
+}
+
+export function setClassIf(element:HTMLElement, condition:boolean, className:string) {
+    if (condition) element.classList.add(className)
+    else element.classList.remove(className)
+}
+
+
+// utilities
+
+export function hide(...elements:HTMLElement[]) {
+    for (const element of elements)
+        element.style.display = 'none'
+}
+
+export function show(...elements:HTMLElement[]) {
+    for (const element of elements)
+        element.style.display = ''
 }
