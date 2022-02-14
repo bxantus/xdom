@@ -64,6 +64,10 @@ export function binding<T>(valueFunction:valueFunction<T>, ...observables:(Obser
     return new Binding(valueFunction, ...observables)
 }
 
+export function propertyBinding<T, P extends (keyof T & string)>(obj:T, propName:P):Binding<T[P]> {
+    return new Binding(()=> obj[propName], (obj as any).$changes?.[propName])    
+}
+
 export type BindingOrValue<T> = Binding<T> | T
 
 export function getValue<T>(v:BindingOrValue<T>):T {

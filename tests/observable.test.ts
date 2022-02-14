@@ -1,5 +1,5 @@
 import { makeObservable, any } from "../src/binding/observableObject.ts"
-import { binding, Binding, getValue, bind, BindingRepository } from "../src/binding/binding.ts"
+import { binding, Binding, getValue, bind, BindingRepository, propertyBinding } from "../src/binding/binding.ts"
 import { assertEquals } from "https://deno.land/std@0.96.0/testing/asserts.ts";
 
 interface TestProps {
@@ -124,4 +124,16 @@ Deno.test("widget like binding with bindingrepo", ()=> {
 
     item.text = "Bye"
     assertEquals(w.innerText, "hello Boti(1)")
+})
+
+Deno.test("property binding of observables", ()=> {
+    const obj = makeObservable<TestProps>({s:"my test", count: 1})
+    const updates:string[] = []
+
+    const sBinding = propertyBinding(obj, "s")
+    sBinding.onUpdate( val => updates.push(val) )
+
+    obj.s = "other text"
+    obj.s = "third text"
+    assertEquals(updates, ["my test", "other text", "third text"])
 })
