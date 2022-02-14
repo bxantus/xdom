@@ -1,5 +1,5 @@
 // DOM related utility library
-import { Binding, BindingOrValue, bind, BindingRepository } from "./models/binding.ts"
+import { Binding, BindingOrValue, bind, BindingRepository } from "./binding/binding.ts"
 
 type TagNames = keyof HTMLElementTagNameMap
 

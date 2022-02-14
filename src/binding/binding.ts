@@ -1,5 +1,5 @@
 import { Observable, Subscription } from "./subscriptions.ts"
-import { dispose } from "../base.ts"
+import { dispose } from "../dispose.ts"
 
 type valueFunction<T> = ()=>T
 type updateFunction<T> = (val:T) => any
