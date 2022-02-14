@@ -1,3 +1,6 @@
+export { SubscriptionRepository, triggered, any as anyProperty, type Observable, type Subscription  } from "./subscriptions.ts"
+export { makeObservable, type ObservableObject, type MaybeObservable } from "./observableObject.ts"
+
 import { Observable, Subscription } from "./subscriptions.ts"
 import { dispose } from "../dispose.ts"
 

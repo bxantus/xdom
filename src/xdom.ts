@@ -1,5 +1,7 @@
+// other exports
+export { dispose, make } from "./dispose.ts"
 // DOM related utility library
-import { Binding, BindingOrValue, bind, BindingRepository } from "./binding/binding.ts"
+import { BindingOrValue, bind, BindingRepository } from "./binding/binding.ts"
 
 type TagNames = keyof HTMLElementTagNameMap
 
