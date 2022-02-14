@@ -15,7 +15,7 @@ interface ElementProps {
 
 const bindingRepo = new BindingRepository<HTMLElement>()
 
-export function el(tagname:TagNames, props?:ElementProps, children?:(HTMLElement|string)[]) {
+export function el(tagname:TagNames, props?:ElementProps, ...children:(HTMLElement|string)[]) {
     const element = document.createElement(tagname)
     if (props?.id)
         element.id = props.id
@@ -32,15 +32,15 @@ export function el(tagname:TagNames, props?:ElementProps, children?:(HTMLElement
     return element
 } 
 export function div(props:ElementProps, ...children:(HTMLElement|string)[]) {
-    return el("div", props, children) as HTMLDivElement
+    return el("div", props, ...children) as HTMLDivElement
 }
 
 export function span(props:ElementProps, ...children:(HTMLElement|string)[]) {
-    return el("span", props, children) as HTMLSpanElement
+    return el("span", props, ...children) as HTMLSpanElement
 }
 
 export function img(props:ElementProps, ...children:(HTMLElement|string)[]) {
-    return el("img", props, children) as HTMLImageElement
+    return el("img", props, ...children) as HTMLImageElement
 }
 
 export function clearBindings(e:HTMLElement) {

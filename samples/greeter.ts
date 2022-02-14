@@ -6,11 +6,11 @@ const greeting = makeObservable({
     user: "Word",
 })
 
-const main = el("div", { class:"main" }, [
+const main = el("div", { class:"main" }, 
     el("span", { innerText: binding(()=>`${greeting.greet} ${greeting.user}!`, 
                                          greeting.$changes.greet, greeting.$changes.user) }
     ),
-])
+)
 
 window.onload = () => {
     document.body.append(main)
