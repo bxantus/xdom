@@ -1,32 +1,35 @@
 // other exports
 export { dispose, make } from "./dispose.ts"
 // DOM related utility library
-import { BindingOrValue, bind, BindingRepository } from "./binding/binding.ts"
+import { BindingOrValue, bind, BindingRepository, type KeysMatching } from "./binding/binding.ts"
+import { Repository as LightBindings, calcProperty } from "./binding/lightBinding.ts"
 
 type TagNames = keyof HTMLElementTagNameMap
+type PropertyValue<T> = BindingOrValue<T> | (() => T) 
 
 interface ElementProps {
     id?:string
-    class?: BindingOrValue<string>
-    innerText?:BindingOrValue<string>
+    class?: PropertyValue<string>
+    innerText?:PropertyValue<string>
     onClick?:(ev: MouseEvent)=>void
-    src?:BindingOrValue<string> /// used by img elements
+    src?:PropertyValue<string> /// used by img elements
 }
 
 const bindingRepo = new BindingRepository<HTMLElement>()
+const lightBindings = new LightBindings()
 
 export function el(tagname:TagNames, props?:ElementProps, ...children:(HTMLElement|string)[]) {
     const element = document.createElement(tagname)
     if (props?.id)
         element.id = props.id
     if (props?.class)
-        bind(element, "className", props.class, bindingRepo)
+        setProperty(element, "className", props.class)
     if (props?.innerText)
-        bind(element, "innerText", props.innerText, bindingRepo)
+        setProperty(element, "innerText", props.innerText)
     if (props?.onClick)
         element.onclick = props.onClick
     if (props?.src && element instanceof HTMLImageElement)
-        bind(element, "src", props.src, bindingRepo)
+        setProperty(element, "src", props.src)
     if (children)
         element.append(...children)
     return element
@@ -54,6 +57,22 @@ export function clearBindingsOfTree(root:HTMLElement) {
     }
 }
 
+function setProperty<Target, V>(obj:Target, prop:KeysMatching<Target, V>, val:PropertyValue<V>) {
+    if (val instanceof Function) 
+        calcProperty(obj, prop, val, lightBindings)
+    else bind(obj, prop, val, bindingRepo) 
+}
+
+// handling light bindings
+function refreshProps(time: DOMHighResTimeStamp) {
+    requestAnimationFrame(refreshProps)  // set up for the next frame
+    // todo: just quick test, refreshing all the light bindings, in no specific order
+    //       should traverse affected nodes in the dom instead, and refresh accordingly
+    for (const obj of lightBindings.bindings.keys()) {
+        lightBindings.refresh(obj)
+    }
+}
+requestAnimationFrame(refreshProps)
 
 /// timeout used to schedule a class change to start a transition
 /// right after the element is added to DOM

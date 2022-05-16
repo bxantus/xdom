@@ -1,14 +1,12 @@
 import { div, el } from "../src/xdom.ts"
-import { binding, makeObservable } from "../src/binding/binding.ts"
 
-const greeting = makeObservable({
+const greeting = ({
     greet: "Hello",
     user: "Word",
 })
 
 const main = el("div", { class:"main" }, 
-    el("span", { innerText: binding(()=>`${greeting.greet} ${greeting.user}!`, 
-                                         greeting.$changes.greet, greeting.$changes.user) }
+    el("span", { innerText: ()=>`${greeting.greet} ${greeting.user}!` }
     ),
 )
 
