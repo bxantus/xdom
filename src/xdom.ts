@@ -2,7 +2,8 @@
 export { dispose, make } from "./dispose.ts"
 // DOM related utility library
 import { BindingOrValue, bind, BindingRepository, type KeysMatching } from "./binding/binding.ts"
-import { Repository as LightBindings, calcProperty } from "./binding/lightBinding.ts"
+import { calcProperty } from "./binding/lightBinding.ts"
+import { lightBindings, startObservingChanges, bindingRepo } from "./domChanges.ts"
 
 type TagNames = keyof HTMLElementTagNameMap
 type PropertyValue<T> = BindingOrValue<T> | (() => T) 
@@ -14,9 +15,6 @@ interface ElementProps {
     onClick?:(ev: MouseEvent)=>void
     src?:PropertyValue<string> /// used by img elements
 }
-
-const bindingRepo = new BindingRepository<HTMLElement>()
-const lightBindings = new LightBindings()
 
 export function el(tagname:TagNames, props?:ElementProps, ...children:(HTMLElement|string)[]) {
     const element = document.createElement(tagname)
@@ -46,16 +44,6 @@ export function img(props:ElementProps, ...children:(HTMLElement|string)[]) {
     return el("img", props, ...children) as HTMLImageElement
 }
 
-export function clearBindings(e:HTMLElement) {
-    bindingRepo.clearBindings(e)
-}
-
-export function clearBindingsOfTree(root:HTMLElement) {
-    clearBindings(root)
-    for (let child = root.firstElementChild; child && child instanceof HTMLElement ; child = child.nextElementSibling) {
-        clearBindingsOfTree(child)
-    }
-}
 
 function setProperty<Target, V>(obj:Target, prop:KeysMatching<Target, V>, val:PropertyValue<V>) {
     if (val instanceof Function) 
@@ -63,16 +51,6 @@ function setProperty<Target, V>(obj:Target, prop:KeysMatching<Target, V>, val:Pr
     else bind(obj, prop, val, bindingRepo) 
 }
 
-// handling light bindings
-function refreshProps(time: DOMHighResTimeStamp) {
-    requestAnimationFrame(refreshProps)  // set up for the next frame
-    // todo: just quick test, refreshing all the light bindings, in no specific order
-    //       should traverse affected nodes in the dom instead, and refresh accordingly
-    for (const obj of lightBindings.bindings.keys()) {
-        lightBindings.refresh(obj)
-    }
-}
-requestAnimationFrame(refreshProps)
 
 /// timeout used to schedule a class change to start a transition
 /// right after the element is added to DOM
@@ -104,3 +82,7 @@ export function show(...elements:HTMLElement[]) {
     for (const element of elements)
         element.style.display = ''
 }
+
+
+// boot code 
+startObservingChanges()
