@@ -1,4 +1,4 @@
-import { list } from "../src/list.ts";
+import { listItems } from "../src/list.ts";
 import { div, el, span } from "../src/xdom.ts"
 
 interface Item {
@@ -37,7 +37,16 @@ const inventory:Item[] = [
 window.onload = () => {
     document.body.append(
         div({innerText:"Main inventory"},
-            list(div({}), inventory, inventoryItem)
+            listItems(div({}), inventory, inventoryItem)
         )
     )
+    addNewItem("alma")
+}
+
+function addNewItem(name:string, count?:number) {
+    inventory.push({
+        name,
+        count: count ?? Math.floor( Math.random() * 50),
+        owner: owners.John
+    })
 }

@@ -1,4 +1,5 @@
 import { calcProperty } from "./binding/lightBinding.ts"
+import { scheduleRecurringUpdate } from "./domChanges.ts";
 
 type templateFunc<ET> = (item:ET)=>HTMLElement
 
@@ -8,14 +9,21 @@ type templateFunc<ET> = (item:ET)=>HTMLElement
  * @param items model for the items, which will be displayed
  * @param template function (or componenet class-like) which displays a given item
  */
-export function list<ET>(listHead:HTMLElement, items:Array<ET>, template:templateFunc<ET>) {
+export function listItems<ET>(listHead:HTMLElement, items:Array<ET>, template:templateFunc<ET>) {
+    // TODO: it makes sense to recalc changes only for observable lists
+    //        and treat arrays as Static (won't change, use only once for list items) 
     if (listHead.children.length > 0) {
         console.error("Element specified for listhead should not have any children", listHead)
         listHead.replaceChildren()
     }
     const updater = new ListUpdater(listHead, items, template)
     updater.update()
-    // should schedule computation checked by xdom in each frame, 
+    // should schedule computation checked by xdom in each frame, in the case of observable lists
+    // TODO: this is just a test, it isn't an effective list implementation (see todo at the beginning)
+    const updateHandle = scheduleRecurringUpdate(()=> {
+        updater.update()
+    })
+    
     // TODO: but the compute should be removed when list is dropped
     //       where do we know that the list is removed?
     //       weakref for listHead could help, and we refresh at gc time, or when listHead is detached from the DOM (would be better)
