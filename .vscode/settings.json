@@ -1,4 +1,5 @@
 {
     "deno.enable": true,
-    "deno.config": "./src/deno.jsonc"
+    "deno.config": "./src/deno.jsonc",
+    "deno.lint": false
 }
