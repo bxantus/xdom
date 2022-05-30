@@ -71,7 +71,7 @@ function updateList<ET>(listHead:HTMLElement, lastPass:ET[], items:ET[], templat
     }
     if (items.length < lastPass.length) {
         // drop last items
-        for (let i = lastPass.length - 1; i >= items.length; ++i) {
+        for (let i = lastPass.length - 1; i >= items.length; --i) {
             listHead.children[i].remove()
         }
         lastPass.splice(items.length, lastPass.length - items.length)
