@@ -17,6 +17,7 @@ function refreshProps() {
 
 function refresh(time: DOMHighResTimeStamp) {
     requestAnimationFrame(refresh)  // set up for the next frame
+    updateStats()
     // run updates, newly scheduled updates while running will be run in the next frame, if not requested otherwise
     const numUpdates = updates.length
     for (let i = 0; i < numUpdates; ++i) {
@@ -110,4 +111,17 @@ export function disposeTree(root:Element) {
         disp.dispose()
         elementRepository.delete(root)
     }
+}
+
+// Statistics
+export const stats = {
+    numBoundObjects: bindingRepo.bindings.size,
+    numLightBoundObjects: lightBindings.bindings.size,
+    numRecurringUpdates: recurring.length
+}
+
+function updateStats() {
+    stats.numBoundObjects = bindingRepo.bindings.size
+    stats.numLightBoundObjects = lightBindings.bindings.size
+    stats.numRecurringUpdates = recurring.length
 }

@@ -1,5 +1,6 @@
 import { listItems } from "../src/list.ts";
 import { div, el, span } from "../src/xdom.ts"
+import { stats } from "../src/domChanges.ts"
 
 interface Item {
     name:string
@@ -36,6 +37,13 @@ const inventory:Item[] = [
 
 window.onload = () => {
     document.body.append(
+        div({},
+            el("p", {innerText:"Stats: ", class:"stats"},
+                span({innerText:()=>`[LightBound objs: ${stats.numLightBoundObjects}], `}),
+                span({innerText:()=>`[Recurring updates: ${stats.numRecurringUpdates}]`}),
+            )
+        ),
+
         div({innerText:"Main inventory"},
             listItems(div({}), inventory, inventoryItem)
         )
