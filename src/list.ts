@@ -64,6 +64,7 @@ function updateList<ET>(listHead:HTMLElement, lastPass:ET[], items:ET[], templat
             // like some maxmatch algo
 
             // currently we will rerender elements from i
+            removeChildrenInRange(listHead, {start:i, end:listHead.children.length})
             const pass:ET[] = items.slice(0, i)
             renderElements(listHead, items, {start:i, end:items.length}, template, pass)
             return pass
@@ -108,4 +109,10 @@ function renderElements<ET>(listHead:HTMLElement, items:ET[], range:Range, templ
         insertLocation.method = "afterend"
     }
     
+}
+
+function removeChildrenInRange(listHead:HTMLElement, range:Range) {
+    const end = Math.min(listHead.children.length, range.end)
+    for (let i = end - 1; i >= range.start; --i)
+        listHead.children[i].remove()
 }
