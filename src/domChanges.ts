@@ -17,7 +17,7 @@ function refreshProps() {
 
 function refresh(time: DOMHighResTimeStamp) {
     requestAnimationFrame(refresh)  // set up for the next frame
-    updateStats()
+    updateStats(time)
     // run updates, newly scheduled updates while running will be run in the next frame, if not requested otherwise
     const numUpdates = updates.length
     for (let i = 0; i < numUpdates; ++i) {
@@ -117,11 +117,29 @@ export function disposeTree(root:Element) {
 export const stats = {
     numBoundObjects: bindingRepo.bindings.size,
     numLightBoundObjects: lightBindings.bindings.size,
-    numRecurringUpdates: recurring.length
+    numRecurringUpdates: recurring.length,
+    fps: 60,
 }
 
-function updateStats() {
+let fpsWindowStart:number|undefined = undefined
+let framesInWindow = 0  // frames ellapsed since fpsWindow started
+const fpsWindowSize = 200 // will update fps each 200 ms
+
+function updateStats(timestamp:number) {
     stats.numBoundObjects = bindingRepo.bindings.size
     stats.numLightBoundObjects = lightBindings.bindings.size
     stats.numRecurringUpdates = recurring.length
+    
+    if (fpsWindowStart === undefined) {
+        fpsWindowStart = timestamp
+    } else {
+        const fpsWindow = timestamp - fpsWindowStart
+        framesInWindow++
+        if (fpsWindow >= fpsWindowSize) {
+            stats.fps = Math.round(framesInWindow * 1000 / fpsWindow)
+            framesInWindow = 0
+            fpsWindowStart = timestamp
+        }
+    }
+    
 }

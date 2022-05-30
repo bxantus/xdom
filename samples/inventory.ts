@@ -41,6 +41,7 @@ window.onload = () => {
             el("p", {innerText:"Stats: ", class:"stats"},
                 span({innerText:()=>`[LightBound objs: ${stats.numLightBoundObjects}], `}),
                 span({innerText:()=>`[Recurring updates: ${stats.numRecurringUpdates}]`}),
+                span({innerText:()=>`[Fps: ${stats.fps}]`}),
             )
         ),
 
