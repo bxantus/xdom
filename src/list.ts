@@ -1,5 +1,6 @@
 import { calcProperty } from "./binding/lightBinding.ts"
-import { scheduleRecurringUpdate } from "./domChanges.ts";
+import { Disposable } from "./dispose.ts";
+import { scheduleRecurringUpdate, disposeTree, registerDisposer } from "./domChanges.ts";
 
 type templateFunc<ET> = (item:ET)=>HTMLElement
 
@@ -10,23 +11,15 @@ type templateFunc<ET> = (item:ET)=>HTMLElement
  * @param template function (or componenet class-like) which displays a given item
  */
 export function listItems<ET>(listHead:HTMLElement, items:Array<ET>, template:templateFunc<ET>) {
-    // TODO: it makes sense to recalc changes only for observable lists
-    //        and treat arrays as Static (won't change, use only once for list items) 
     if (listHead.children.length > 0) {
         console.error("Element specified for listhead should not have any children", listHead)
         listHead.replaceChildren()
     }
+    // will schedule computation checked by xdom in each frame, in the case of observable lists
     const updater = new ListUpdater(listHead, items, template)
+    registerDisposer(listHead, updater)
     updater.update()
-    // should schedule computation checked by xdom in each frame, in the case of observable lists
-    // TODO: this is just a test, it isn't an effective list implementation (see todo at the beginning)
-    const updateHandle = scheduleRecurringUpdate(()=> {
-        updater.update()
-    })
     
-    // TODO: but the compute should be removed when list is dropped
-    //       where do we know that the list is removed?
-    //       weakref for listHead could help, and we refresh at gc time, or when listHead is detached from the DOM (would be better)
     return listHead
 }
 
@@ -37,8 +30,15 @@ enum UpdateStrategy {
 }
 
 class ListUpdater<ET> {
+    updateHandle:Disposable
     constructor(private listHead:HTMLElement, items:ET[], private template:templateFunc<ET>) {
         this._items = items
+        // TODO: it makes sense to recalc changes only for observable lists
+        //        and treat arrays as Static (won't change, use only once for list items) 
+        // TODO: this is just a test, it isn't an effective list implementation 
+        this.updateHandle = scheduleRecurringUpdate(()=> {
+            this.update()
+        })
     }
     private _items:ET[] = []
     get items() { return this._items }
@@ -49,6 +49,10 @@ class ListUpdater<ET> {
     private lastPass:ET[] = []
     update() {
         this.lastPass = updateList(this.listHead, this.lastPass, this.items, this.template)
+    }
+
+    dispose() {
+        this.updateHandle.dispose()
     }
 }
 
@@ -73,6 +77,7 @@ function updateList<ET>(listHead:HTMLElement, lastPass:ET[], items:ET[], templat
     if (items.length < lastPass.length) {
         // drop last items
         for (let i = lastPass.length - 1; i >= items.length; --i) {
+            disposeTree(listHead.children[i])
             listHead.children[i].remove()
         }
         lastPass.splice(items.length, lastPass.length - items.length)
@@ -113,6 +118,8 @@ function renderElements<ET>(listHead:HTMLElement, items:ET[], range:Range, templ
 
 function removeChildrenInRange(listHead:HTMLElement, range:Range) {
     const end = Math.min(listHead.children.length, range.end)
-    for (let i = end - 1; i >= range.start; --i)
+    for (let i = end - 1; i >= range.start; --i) {
+        disposeTree(listHead.children[i])
         listHead.children[i].remove()
+    }
 }

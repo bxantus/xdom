@@ -1,4 +1,4 @@
-// This module handles changes in the dom coming from recurring computations, light bndings, bindings and list changes
+// This module handles changes in the dom coming from recurring computations, light bindings, bindings and list changes
 // If you use xdom, change detection will be activated automatically by it
 import { BindingRepository } from "./binding/binding.ts";
 import { Repository as LightBindings } from "./binding/lightBinding.ts"
@@ -86,15 +86,28 @@ export function startObservingChanges() {
 
 // handling normal bindings 
 // NOTE: will we need them for property bindings later on?
-export const bindingRepo = new BindingRepository<HTMLElement>()
+export const bindingRepo = new BindingRepository<Element>()
+// TODO: later elementRepository should encompass bindings and light bindings as well
+//       so we don't have to maintain 3 different maps for elements
+const elementRepository = new Map<any, Disposable>()
 
-export function clearBindings(e:HTMLElement) {
-    bindingRepo.clearBindings(e)
+// When resources for e are cleared (like the dom tree is released), disposer will be run
+export function registerDisposer(e:any, disp:Disposable) {
+    // NOTE: hopefully only one disposer will be registered for each element...
+    elementRepository.set(e, disp)
 }
 
-export function clearBindingsOfTree(root:HTMLElement) {
-    clearBindings(root)
-    for (let child = root.firstElementChild; child && child instanceof HTMLElement ; child = child.nextElementSibling) {
-        clearBindingsOfTree(child)
+export function disposeTree(root:Element) {
+    // first children are disposed, so manipulating child items from dipose won't interfere with releasing resources
+    for (let child = root.firstElementChild; child ; child = child.nextElementSibling) {
+        disposeTree(child)
+    }
+
+    bindingRepo.clearBindings(root)
+    lightBindings.clearForObject(root)
+    const disp = elementRepository.get(root)
+    if (disp) {
+        disp.dispose()
+        elementRepository.delete(root)
     }
 }
