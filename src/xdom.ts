@@ -14,6 +14,13 @@ interface ElementProps {
     innerText?:PropertyValue<string>
     onClick?:(ev: MouseEvent)=>void
     src?:PropertyValue<string> /// used by img elements
+    // input element specific
+    type?:string /// used by input elements
+    checked?:PropertyValue<boolean>
+    for?:string /// id of asociated element for label
+    value?:PropertyValue<string>
+    // option elements
+    selected?:PropertyValue<boolean>
 }
 
 export function el(tagname:TagNames, props?:ElementProps, ...children:(HTMLElement|string)[]) {
@@ -28,6 +35,21 @@ export function el(tagname:TagNames, props?:ElementProps, ...children:(HTMLEleme
         element.onclick = props.onClick
     if (props?.src && element instanceof HTMLImageElement)
         setProperty(element, "src", props.src)
+    if (element instanceof HTMLInputElement) {
+        if (props?.type )
+            element.type = props.type
+        if (props?.checked != undefined)
+            setProperty(element, "checked", props.checked)
+        
+    }
+    if (props?.for && element instanceof HTMLLabelElement) {
+        element.htmlFor = props.for
+    }
+    if (props?.value && (element instanceof HTMLInputElement || element instanceof HTMLSelectElement || element instanceof HTMLOptionElement))
+        setProperty(element, "value", props.value)
+    if (props?.selected && element instanceof HTMLOptionElement) {
+        setProperty(element, "selected", props.selected)
+    }
     if (children)
         element.append(...children)
     return element
