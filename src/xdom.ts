@@ -13,6 +13,8 @@ interface ElementProps {
     class?: PropertyValue<string>
     innerText?:PropertyValue<string>
     onClick?:(ev: MouseEvent)=>void
+    // todo: needs more event handlers: focus events, key events, input events, animation events
+    
     src?:PropertyValue<string> /// used by img elements
     // input element specific
     type?:string /// used by input elements

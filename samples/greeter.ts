@@ -1,9 +1,9 @@
 import { div, el } from "../src/xdom.ts"
 
-const greeting = ({
+const greeting = {
     greet: "Hello",
     user: "Word",
-})
+}
 
 const main = el("div", { class:"main" }, 
     el("span", { innerText: ()=>`${greeting.greet} ${greeting.user}!` }
