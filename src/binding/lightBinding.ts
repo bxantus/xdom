@@ -6,22 +6,27 @@
 
 import { KeysMatching } from "./binding.ts";
 
-type CalculatedValue<T> = ()=>T 
+type CalculatedValue<T> = ()=>T
+interface CustomProperty<T> {
+    get:()=>T
+    set:(val:T)=>any
+} 
 export interface LightBinding<T> {
-    prop:string|symbol|number
+    prop:string|symbol|number|CustomProperty<T>
     calc:CalculatedValue<T>
 }
 
 export class Repository {
     bindings = new Map<any, LightBinding<any>[]>()
 
-    add(obj:any, prop:string|symbol|number, calc:CalculatedValue<any>|undefined) {
+    add<T>(obj:any, prop:string|symbol|number|CustomProperty<T>, calc:CalculatedValue<T>|undefined) {
         if (!calc) return
         const list = this.bindings.get(obj)
-        const binding:LightBinding<any> = { prop, calc }
+        const binding:LightBinding<T> = { prop, calc }
         if (!list) {
             this.bindings.set(obj, [binding])
         } else list.push(binding)
+        return binding
     }
 
     clearForObject(obj:any) {
@@ -35,14 +40,27 @@ export class Repository {
         const list = this.bindings.get(obj)
         if (!list) return
         for (const lb of list) {
-            const newVal = lb.calc()
-            if (obj[lb.prop] != newVal)
-                obj[lb.prop] = newVal 
+            updatePropValue(obj, lb)
         }
     }
+}
+
+function updatePropValue<T>(obj:any, lb:LightBinding<T>) {
+    const newVal = lb.calc()
+    if (typeof lb.prop == "object") { // custom prop
+        const currentVal = lb.prop.get()
+        if (currentVal != newVal)
+            lb.prop.set(newVal)
+    } else if (obj[lb.prop] != newVal)
+        obj[lb.prop] = newVal 
 }
 
 export function calcProperty<Target, V>(obj:Target, prop:KeysMatching<Target, V>, calc:CalculatedValue<V>, repo?:Repository) {
     (obj as any)[prop] = calc()
     repo?.add(obj, prop, calc)
+}
+
+export function calcCustomProperty<Target, V>(obj:Target, customProp:CustomProperty<V>, calc:CalculatedValue<V>, repo?:Repository) {
+    updatePropValue(obj, { prop:customProp, calc })
+    repo?.add(obj, customProp, calc)
 }
