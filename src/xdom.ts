@@ -12,7 +12,7 @@ interface ElementProps {
     id?:string
     class?: PropertyValue<string>
     innerText?:PropertyValue<string>
-    onClick?:(ev: MouseEvent)=>void
+    onClick?:(this:HTMLElement, ev: MouseEvent)=>void
     // todo: needs more event handlers: focus events, key events, input events, animation events
 }
 
@@ -27,7 +27,7 @@ export function el<K extends TagNames>(tagname:K, props?:ElementProps, ...childr
     if (props?.innerText)
         setProperty(element, "innerText", props.innerText)
     if (props?.onClick)
-        element.onclick = props.onClick
+        element.onclick = ev => props.onClick!.call(element, ev)
     
     if (children)
         element.append(...children)
@@ -56,17 +56,23 @@ interface InputProps extends ElementProps {
     type?:string /// used by input elements
     checked?:PropertyValue<boolean>
     value?:PropertyValue<string>
+    onInput?:(this:HTMLInputElement, ev:Event)=>any
+    onChange?:(this:HTMLInputElement, ev:Event)=>any
 }
 
 export function input(props:InputProps, ...children:Children) {
     const element = el("input", props, ...children)
-    if (props?.type )
+    if (props.type )
         element.type = props.type
-    if (props?.checked != undefined)
+    if (props.checked != undefined)
         setProperty(element, "checked", props.checked)
-    if (props?.value)
+    if (props.value)
         setProperty(element, "value", props.value)
-    
+    if (props.onInput)
+        element.oninput = ev => props.onInput!.call(element, ev)
+    if (props.onChange)
+        element.onchange = ev => props.onChange!.call(element, ev)
+
     return element
 }
 
@@ -84,12 +90,18 @@ export function label(props:LabelProps, ...children:Children) {
 
 interface SelectProps extends ElementProps {
     value?:PropertyValue<string>
+    onInput?:(this:HTMLSelectElement, ev:Event)=>any
+    onChange?:(this:HTMLSelectElement, ev:Event)=>any
 }
 
 export function select(props:SelectProps, ...children:Children) {
     const element = el ("select", props, ...children)
     if (props?.value)
         setProperty(element, "value", props.value)
+    if (props.onInput)
+        element.oninput = ev => props.onInput!.call(element, ev)
+    if (props.onChange)
+        element.onchange = ev => props.onChange!.call(element, ev)
     return element
 }
 
@@ -100,7 +112,7 @@ interface OptionProps extends ElementProps {
 
 export function option(props:OptionProps, ...children:Children) {
     const element = el("option", props, ...children) 
-    if (props?.selected && element instanceof HTMLOptionElement) {
+    if (props?.selected) {
         setProperty(element, "selected", props.selected)
     }
     if (props?.value)
