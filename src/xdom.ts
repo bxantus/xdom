@@ -25,8 +25,9 @@ interface ElementProps {
     selected?:PropertyValue<boolean>
 }
 
-export function el(tagname:TagNames, props?:ElementProps, ...children:(HTMLElement|string)[]) {
-    const element = document.createElement(tagname)
+export function el<K extends TagNames>(tagname:K, props?:ElementProps, ...children:(HTMLElement|string)[]):HTMLElementTagNameMap[K] {
+    const result = document.createElement(tagname)
+    const element = result as HTMLElement
     if (props?.id)
         element.id = props.id
     if (props?.class)
@@ -54,7 +55,7 @@ export function el(tagname:TagNames, props?:ElementProps, ...children:(HTMLEleme
     }
     if (children)
         element.append(...children)
-    return element
+    return result
 } 
 export function div(props:ElementProps, ...children:(HTMLElement|string)[]) {
     return el("div", props, ...children) as HTMLDivElement
