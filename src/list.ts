@@ -1,6 +1,6 @@
-import { calcProperty } from "./binding/lightBinding.ts"
 import { Disposable } from "./dispose.ts";
-import { scheduleRecurringUpdate, disposeTree, registerDisposer } from "./domChanges.ts";
+import { scheduleUpdate, disposeTree, registerDisposer } from "./domChanges.ts";
+import { ObservableList } from "./objects/observableList.ts";
 
 type templateFunc<ET> = (item:ET)=>HTMLElement
 
@@ -10,7 +10,7 @@ type templateFunc<ET> = (item:ET)=>HTMLElement
  * @param items model for the items, which will be displayed
  * @param template function (or componenet class-like) which displays a given item
  */
-export function listItems<ET>(listHead:HTMLElement, items:Array<ET>, template:templateFunc<ET>) {
+export function listItems<ET>(listHead:HTMLElement, items:ObservableList<ET>, template:templateFunc<ET>) {
     if (listHead.children.length > 0) {
         console.error("Element specified for listhead should not have any children", listHead)
         listHead.replaceChildren()
@@ -23,44 +23,41 @@ export function listItems<ET>(listHead:HTMLElement, items:Array<ET>, template:te
     return listHead
 }
 
-enum UpdateStrategy {
-    Static,     // list is treated as a static list, it won't be checked for changes
-    AddOrRemove, // list items are only newly added or removed from the list in each update from the end
-    Full,       // list can change fully and randomly
-}
-
 class ListUpdater<ET> {
-    updateHandle:Disposable
-    constructor(private listHead:HTMLElement, items:ET[], private template:templateFunc<ET>) {
+    listChanges:Disposable
+    constructor(private listHead:HTMLElement, items:ObservableList<ET>, private template:templateFunc<ET>) {
         this._items = items
-        // TODO: it makes sense to recalc changes only for observable lists
-        //        and treat arrays as Static (won't change, use only once for list items) 
-        // TODO: this is just a test, it isn't an effective list implementation 
-        this.updateHandle = scheduleRecurringUpdate(()=> {
-            this.update()
-        })
+        
+        let updateScheduled = false
+        this.listChanges = items.$changes.list.subscribe(()=>{
+            if (updateScheduled)
+                return
+            scheduleUpdate(()=> {
+                updateScheduled = false
+                this.update()
+            })
+        }) 
+        
+        
     }
-    private _items:ET[] = []
+    private _items:ObservableList<ET>
     get items() { return this._items }
-    set items(items:ET[]) {
-
-    }
-
+    
     private lastPass:ET[] = []
     update() {
         this.lastPass = updateList(this.listHead, this.lastPass, this.items, this.template)
     }
 
     dispose() {
-        this.updateHandle.dispose()
+        this.listChanges.dispose()
     }
 }
 
-function updateList<ET>(listHead:HTMLElement, lastPass:ET[], items:ET[], template:templateFunc<ET>) {
+function updateList<ET>(listHead:HTMLElement, lastPass:ET[], items:ObservableList<ET>, template:templateFunc<ET>) {
     let count = Math.min(lastPass.length, items.length)
     
     for (let i = 0; i < count; ++i) {
-        if (lastPass[i] != items[i]) { // item change detected
+        if (lastPass[i] != items.at(i)) { // item change detected
             // could search for the next match in items, for lastPass[i], at index k
             // elements between [i,k) would have to be created again from items, and inserted before listHead.children[i]
             // but if the item is replaced, lists aren't shifted, then only this element should be rerendered
@@ -100,16 +97,16 @@ interface Range {
  * Newly rendered items will be added to pass (can be used in the next check)
  * Assumes listHead has at least start children already!
  */
-function renderElements<ET>(listHead:HTMLElement, items:ET[], range:Range, template:templateFunc<ET>, pass:ET[]) {
+function renderElements<ET>(listHead:HTMLElement, items:ObservableList<ET>, range:Range, template:templateFunc<ET>, pass:ET[]) {
     const insertLocation = {
         element: range.start < listHead.children.length ? listHead.children[range.start] : listHead,
         method: range.start < listHead.children.length ? "afterend" : "beforeend" as InsertPosition
     }
 
     for (let i = range.start; i < range.end; ++i) {
-        const newElement = template(items[i])
+        const newElement = template(items.at(i))
         insertLocation.element.insertAdjacentElement(insertLocation.method, newElement)
-        pass.push(items[i])
+        pass.push(items.at(i))
         insertLocation.element = newElement
         insertLocation.method = "afterend"
     }

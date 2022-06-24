@@ -56,5 +56,9 @@ export class ObservableList<T> {
         this.subs.notifyFor("list")
     }
 
+    slice(start?:number, end?:number) {
+        return this.items.slice(start, end)
+    }
+
     get $changes() { return this.subs.changes }
 }

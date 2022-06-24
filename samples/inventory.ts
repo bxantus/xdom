@@ -1,6 +1,7 @@
 import { listItems } from "../src/list.ts";
 import { div, el, span } from "../src/xdom.ts"
 import { stats } from "../src/domChanges.ts"
+import { ObservableList } from "../src/objects/observableList.ts";
 
 interface Item {
     name:string
@@ -30,10 +31,10 @@ const owners = {
     Casey: { name:"Casey", prename:"Jordan" },
 }
 
-const inventory:Item[] = [
+const inventory = ObservableList.of(
     { name:"Snickers", count:10, owner:owners.Casey },
     { name:"Bounty", count:3, owner:owners.John }
-] 
+)
 
 window.onload = () => {
     document.body.append(
