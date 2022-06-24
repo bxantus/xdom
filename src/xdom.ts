@@ -1,32 +1,57 @@
 // other exports
 export { dispose, make } from "./dispose.ts"
 // DOM related utility library
-import { BindingOrValue, bind, BindingRepository } from "./binding/binding.ts"
+import { BindingOrValue, bind, BindingRepository, type KeysMatching } from "./binding/binding.ts"
+import { calcProperty } from "./binding/lightBinding.ts"
+import { lightBindings, startObservingChanges, bindingRepo } from "./domChanges.ts"
 
 type TagNames = keyof HTMLElementTagNameMap
+type PropertyValue<T> = BindingOrValue<T> | (() => T) 
 
 interface ElementProps {
     id?:string
-    class?: BindingOrValue<string>
-    innerText?:BindingOrValue<string>
+    class?: PropertyValue<string>
+    innerText?:PropertyValue<string>
     onClick?:(ev: MouseEvent)=>void
-    src?:BindingOrValue<string> /// used by img elements
+    // todo: needs more event handlers: focus events, key events, input events, animation events
+    
+    src?:PropertyValue<string> /// used by img elements
+    // input element specific
+    type?:string /// used by input elements
+    checked?:PropertyValue<boolean>
+    for?:string /// id of asociated element for label
+    value?:PropertyValue<string>
+    // option elements
+    selected?:PropertyValue<boolean>
 }
-
-const bindingRepo = new BindingRepository<HTMLElement>()
 
 export function el(tagname:TagNames, props?:ElementProps, ...children:(HTMLElement|string)[]) {
     const element = document.createElement(tagname)
     if (props?.id)
         element.id = props.id
     if (props?.class)
-        bind(element, "className", props.class, bindingRepo)
+        setProperty(element, "className", props.class)
     if (props?.innerText)
-        bind(element, "innerText", props.innerText, bindingRepo)
+        setProperty(element, "innerText", props.innerText)
     if (props?.onClick)
         element.onclick = props.onClick
     if (props?.src && element instanceof HTMLImageElement)
-        bind(element, "src", props.src, bindingRepo)
+        setProperty(element, "src", props.src)
+    if (element instanceof HTMLInputElement) {
+        if (props?.type )
+            element.type = props.type
+        if (props?.checked != undefined)
+            setProperty(element, "checked", props.checked)
+        
+    }
+    if (props?.for && element instanceof HTMLLabelElement) {
+        element.htmlFor = props.for
+    }
+    if (props?.value && (element instanceof HTMLInputElement || element instanceof HTMLSelectElement || element instanceof HTMLOptionElement))
+        setProperty(element, "value", props.value)
+    if (props?.selected && element instanceof HTMLOptionElement) {
+        setProperty(element, "selected", props.selected)
+    }
     if (children)
         element.append(...children)
     return element
@@ -43,15 +68,11 @@ export function img(props:ElementProps, ...children:(HTMLElement|string)[]) {
     return el("img", props, ...children) as HTMLImageElement
 }
 
-export function clearBindings(e:HTMLElement) {
-    bindingRepo.clearBindings(e)
-}
 
-export function clearBindingsOfTree(root:HTMLElement) {
-    clearBindings(root)
-    for (let child = root.firstElementChild; child && child instanceof HTMLElement ; child = child.nextElementSibling) {
-        clearBindingsOfTree(child)
-    }
+function setProperty<Target, V>(obj:Target, prop:KeysMatching<Target, V>, val:PropertyValue<V>) {
+    if (val instanceof Function) 
+        calcProperty(obj, prop, val, lightBindings)
+    else bind(obj, prop, val, bindingRepo) 
 }
 
 
@@ -85,3 +106,7 @@ export function show(...elements:HTMLElement[]) {
     for (const element of elements)
         element.style.display = ''
 }
+
+
+// boot code 
+startObservingChanges()

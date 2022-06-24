@@ -1,0 +1,38 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "deno",
+			"command": "bundle",
+			"problemMatcher": [
+				"$deno"
+			],
+			"args": [
+				"--config",
+				"samples/deno.jsonc",
+				"samples/greeter.ts",
+				"samples/out/greeter.js"
+			],
+
+			"group": "build",
+			"label": "deno: bundle greeter"
+		},
+
+		{
+			"type": "deno",
+			"command": "bundle",
+			"problemMatcher": [
+				"$deno"
+			],
+			"args": [
+				"--config",
+				"samples/deno.jsonc",
+				"samples/inventory.ts",
+				"samples/out/inventory.js"
+			],
+
+			"group": "build",
+			"label": "deno: bundle inventory sample"
+		}
+	]
+}
