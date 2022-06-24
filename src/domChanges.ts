@@ -95,6 +95,11 @@ const elementRepository = new Map<any, Disposable>()
 // When resources for e are cleared (like the dom tree is released), disposer will be run
 export function registerDisposer(e:any, disp:Disposable) {
     // NOTE: hopefully only one disposer will be registered for each element...
+    if (elementRepository.has(e))
+        console.error("Element has already registered a disposer, this will be overwritten now!", {
+            element:e, disposer: elementRepository.get(e)
+        })
+
     elementRepository.set(e, disp)
 }
 
@@ -113,7 +118,7 @@ export function disposeTree(root:Element) {
     }
 }
 
-// Statistics
+// Statistics  ------------------------------------------------------------------------------------------------
 export const stats = {
     numBoundObjects: bindingRepo.bindings.size,
     numLightBoundObjects: lightBindings.bindings.size,

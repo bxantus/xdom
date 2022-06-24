@@ -1,17 +1,19 @@
 // other exports
 export { dispose, make } from "./dispose.ts"
 // DOM related utility library
-import { BindingOrValue, bind, BindingRepository, type KeysMatching } from "./binding/binding.ts"
-import { calcProperty } from "./binding/lightBinding.ts"
+import { BindingOrValue, bind, type KeysMatching } from "./binding/binding.ts"
+import { calcCustomProperty, calcProperty } from "./binding/lightBinding.ts"
 import { lightBindings, startObservingChanges, bindingRepo } from "./domChanges.ts"
 
 type TagNames = keyof HTMLElementTagNameMap
 type PropertyValue<T> = BindingOrValue<T> | (() => T) 
+type CalcOrValue<T> = T | (() => T)
 
 interface ElementProps<Element> {
     id?:string
     class?: PropertyValue<string>
     innerText?:PropertyValue<string>
+    visible?:CalcOrValue<boolean>
     onClick?:(this:Element, ev: MouseEvent)=>void
     // todo: needs more event handlers: focus events, key events, input events, animation events
 }
@@ -28,6 +30,18 @@ export function el<K extends TagNames>(tagname:K, props?:ElementProps<HTMLElemen
         setProperty(element, "innerText", props.innerText)
     if (props?.onClick)
         element.onclick = ev => props.onClick!.call(result, ev)
+    if (props?.visible != undefined) {
+        if (props.visible instanceof Function) {
+            // NOTE: attaches a custom computed property to this element which has it's own getter/setter
+            //       when the tree is diposed this lightbinding with the customProperty holder will be removed from lightBindings
+            const visibilityUpdater = {
+                visible: true,
+                get() { return this.visible },
+                set(v:boolean) { this.visible = v; v ? show(element) : hide(element) }
+            }
+            calcCustomProperty(element, visibilityUpdater, props.visible, lightBindings)
+        } else if (!props.visible) hide()
+    }
     
     if (children)
         element.append(...children)
