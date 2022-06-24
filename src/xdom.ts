@@ -8,16 +8,16 @@ import { lightBindings, startObservingChanges, bindingRepo } from "./domChanges.
 type TagNames = keyof HTMLElementTagNameMap
 type PropertyValue<T> = BindingOrValue<T> | (() => T) 
 
-interface ElementProps {
+interface ElementProps<Element> {
     id?:string
     class?: PropertyValue<string>
     innerText?:PropertyValue<string>
-    onClick?:(this:HTMLElement, ev: MouseEvent)=>void
+    onClick?:(this:Element, ev: MouseEvent)=>void
     // todo: needs more event handlers: focus events, key events, input events, animation events
 }
 
 type Children = (HTMLElement|string)[]
-export function el<K extends TagNames>(tagname:K, props?:ElementProps, ...children:Children):HTMLElementTagNameMap[K] {
+export function el<K extends TagNames>(tagname:K, props?:ElementProps<HTMLElementTagNameMap[K]>, ...children:Children):HTMLElementTagNameMap[K] {
     const result = document.createElement(tagname)
     const element = result as HTMLElement
     if (props?.id)
@@ -27,21 +27,21 @@ export function el<K extends TagNames>(tagname:K, props?:ElementProps, ...childr
     if (props?.innerText)
         setProperty(element, "innerText", props.innerText)
     if (props?.onClick)
-        element.onclick = ev => props.onClick!.call(element, ev)
+        element.onclick = ev => props.onClick!.call(result, ev)
     
     if (children)
         element.append(...children)
     return result
 } 
-export function div(props:ElementProps, ...children:Children) {
-    return el("div", props, ...children) as HTMLDivElement
+export function div(props:ElementProps<HTMLDivElement>, ...children:Children) {
+    return el("div", props, ...children)
 }
 
-export function span(props:ElementProps, ...children:Children) {
+export function span(props:ElementProps<HTMLSpanElement>, ...children:Children) {
     return el("span", props, ...children) as HTMLSpanElement
 }
 
-interface ImgProps extends ElementProps {
+interface ImgProps extends ElementProps<HTMLImageElement> {
     src?:PropertyValue<string> /// used by img elements
 }
 
@@ -52,7 +52,7 @@ export function img(props:ImgProps, ...children:Children) {
     return img
 }
 
-interface InputProps extends ElementProps {
+interface InputProps extends ElementProps<HTMLInputElement> {
     type?:string /// used by input elements
     checked?:PropertyValue<boolean>
     value?:PropertyValue<string>
@@ -76,7 +76,7 @@ export function input(props:InputProps, ...children:Children) {
     return element
 }
 
-interface LabelProps extends ElementProps {
+interface LabelProps extends ElementProps<HTMLLabelElement> {
     for?:string /// id of asociated element for label
 }
 
@@ -88,7 +88,7 @@ export function label(props:LabelProps, ...children:Children) {
     return element
 }
 
-interface SelectProps extends ElementProps {
+interface SelectProps extends ElementProps<HTMLSelectElement> {
     value?:PropertyValue<string>
     onInput?:(this:HTMLSelectElement, ev:Event)=>any
     onChange?:(this:HTMLSelectElement, ev:Event)=>any
@@ -105,7 +105,7 @@ export function select(props:SelectProps, ...children:Children) {
     return element
 }
 
-interface OptionProps extends ElementProps {
+interface OptionProps extends ElementProps<HTMLOptionElement> {
     selected?:PropertyValue<boolean>
     value?:PropertyValue<string>
 }
