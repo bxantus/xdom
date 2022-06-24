@@ -14,18 +14,10 @@ interface ElementProps {
     innerText?:PropertyValue<string>
     onClick?:(ev: MouseEvent)=>void
     // todo: needs more event handlers: focus events, key events, input events, animation events
-    
-    src?:PropertyValue<string> /// used by img elements
-    // input element specific
-    type?:string /// used by input elements
-    checked?:PropertyValue<boolean>
-    for?:string /// id of asociated element for label
-    value?:PropertyValue<string>
-    // option elements
-    selected?:PropertyValue<boolean>
 }
 
-export function el<K extends TagNames>(tagname:K, props?:ElementProps, ...children:(HTMLElement|string)[]):HTMLElementTagNameMap[K] {
+type Children = (HTMLElement|string)[]
+export function el<K extends TagNames>(tagname:K, props?:ElementProps, ...children:Children):HTMLElementTagNameMap[K] {
     const result = document.createElement(tagname)
     const element = result as HTMLElement
     if (props?.id)
@@ -36,37 +28,84 @@ export function el<K extends TagNames>(tagname:K, props?:ElementProps, ...childr
         setProperty(element, "innerText", props.innerText)
     if (props?.onClick)
         element.onclick = props.onClick
-    if (props?.src && element instanceof HTMLImageElement)
-        setProperty(element, "src", props.src)
-    if (element instanceof HTMLInputElement) {
-        if (props?.type )
-            element.type = props.type
-        if (props?.checked != undefined)
-            setProperty(element, "checked", props.checked)
-        
-    }
-    if (props?.for && element instanceof HTMLLabelElement) {
-        element.htmlFor = props.for
-    }
-    if (props?.value && (element instanceof HTMLInputElement || element instanceof HTMLSelectElement || element instanceof HTMLOptionElement))
-        setProperty(element, "value", props.value)
-    if (props?.selected && element instanceof HTMLOptionElement) {
-        setProperty(element, "selected", props.selected)
-    }
+    
     if (children)
         element.append(...children)
     return result
 } 
-export function div(props:ElementProps, ...children:(HTMLElement|string)[]) {
+export function div(props:ElementProps, ...children:Children) {
     return el("div", props, ...children) as HTMLDivElement
 }
 
-export function span(props:ElementProps, ...children:(HTMLElement|string)[]) {
+export function span(props:ElementProps, ...children:Children) {
     return el("span", props, ...children) as HTMLSpanElement
 }
 
-export function img(props:ElementProps, ...children:(HTMLElement|string)[]) {
-    return el("img", props, ...children) as HTMLImageElement
+interface ImgProps extends ElementProps {
+    src?:PropertyValue<string> /// used by img elements
+}
+
+export function img(props:ImgProps, ...children:Children) {
+    const img = el("img", props, ...children)
+    if (props?.src)
+        setProperty(img, "src", props.src)
+    return img
+}
+
+interface InputProps extends ElementProps {
+    type?:string /// used by input elements
+    checked?:PropertyValue<boolean>
+    value?:PropertyValue<string>
+}
+
+export function input(props:InputProps, ...children:Children) {
+    const element = el("input", props, ...children)
+    if (props?.type )
+        element.type = props.type
+    if (props?.checked != undefined)
+        setProperty(element, "checked", props.checked)
+    if (props?.value)
+        setProperty(element, "value", props.value)
+    
+    return element
+}
+
+interface LabelProps extends ElementProps {
+    for?:string /// id of asociated element for label
+}
+
+export function label(props:LabelProps, ...children:Children) {
+    const element = el("label", props, ...children)
+    if (props?.for && element instanceof HTMLLabelElement) {
+        element.htmlFor = props.for
+    }
+    return element
+}
+
+interface SelectProps extends ElementProps {
+    value?:PropertyValue<string>
+}
+
+export function select(props:SelectProps, ...children:Children) {
+    const element = el ("select", props, ...children)
+    if (props?.value)
+        setProperty(element, "value", props.value)
+    return element
+}
+
+interface OptionProps extends ElementProps {
+    selected?:PropertyValue<boolean>
+    value?:PropertyValue<string>
+}
+
+export function option(props:OptionProps, ...children:Children) {
+    const element = el("option", props, ...children) 
+    if (props?.selected && element instanceof HTMLOptionElement) {
+        setProperty(element, "selected", props.selected)
+    }
+    if (props?.value)
+        setProperty(element, "value", props.value)
+    return element
 }
 
 
