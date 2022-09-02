@@ -35,6 +35,7 @@ export function el<K extends TagNames>(tagname:K, props?:ElementProps<HTMLElemen
             // NOTE: attaches a custom computed property to this element which has it's own getter/setter
             //       when the tree is diposed this lightbinding with the customProperty holder will be removed from lightBindings
             const visibilityUpdater = {
+                name: "visible",
                 visible: true,
                 get() { return this.visible },
                 set(v:boolean) { this.visible = v; v ? show(element) : hide(element) }

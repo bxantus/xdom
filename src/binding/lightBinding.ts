@@ -8,6 +8,7 @@ import { KeysMatching } from "./binding.ts";
 
 type CalculatedValue<T> = ()=>T
 interface CustomProperty<T> {
+    name:string
     get:()=>T
     set:(val:T)=>any
 } 

@@ -145,6 +145,5 @@ function updateStats(timestamp:number) {
             framesInWindow = 0
             fpsWindowStart = timestamp
         }
-    }
-    
+    }   
 }
