@@ -7,7 +7,7 @@ import { lightBindings, startObservingChanges, bindingRepo } from "./domChanges.
 
 type TagNames = keyof HTMLElementTagNameMap
 type PropertyValue<T> = BindingOrValue<T> | (() => T) 
-type CalcOrValue<T> = T | (() => T)
+export type CalcOrValue<T> = T | (() => T)
 
 interface ElementProps<Element> {
     id?:string
