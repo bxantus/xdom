@@ -8,8 +8,9 @@ export const lightBindings = new LightBindings()
 
 // handling light bindings
 function refreshProps() {
-    // todo: just quick test, refreshing all the light bindings, in no specific order
-    //       should traverse affected nodes in the dom instead, and refresh accordingly
+    // NOTE: this code refreshes all the light bindings, in no specific order.
+    //       If this can cause problems (somehow calculations having side effects on children, like removing them), 
+    //       we should traverse affected nodes in the dom instead, and refresh accordingly
     for (const obj of lightBindings.bindings.keys()) {
         lightBindings.refresh(obj)
     }
