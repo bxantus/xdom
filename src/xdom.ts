@@ -12,7 +12,7 @@ export type CalcOrValue<T> = T | (() => T)
 interface ElementProps<Element> {
     id?:string
     class?: PropertyValue<string>
-    innerText?:PropertyValue<string>
+    innerText?:PropertyValue<string> // todo: rename it simply to text, and use textContent (see mdn about innerText and textContent)
     visible?:CalcOrValue<boolean>
     onClick?:(this:Element, ev: MouseEvent)=>void
     // todo: needs more event handlers: focus events, key events, input events, animation events
