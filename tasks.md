@@ -1,6 +1,4 @@
 ## Preparing for 1.0 release
-- Remove the use of bindings and from xdom elements
-  - Check if we still need observableobject stuff (observable list is needed)
 - Wrap light binding creation inside an object (like a class) to better differentiate them from simple functions.
   They will be wrapped inside expressions like `calc(_ => a + b)`, showcasing that the value is calculated.
   > Note: they could receive a frame idx as argument, something similar to notebooks showcased in JSConf 2022

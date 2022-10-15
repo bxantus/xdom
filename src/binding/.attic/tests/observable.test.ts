@@ -1,5 +1,5 @@
-import { makeObservable, any } from "../src/binding/observableObject.ts"
-import { binding, Binding, getValue, bind, BindingRepository, propertyBinding } from "../src/binding/binding.ts"
+import { makeObservable, any } from "../observableObject.ts"
+import { binding, Binding, getValue, bind, BindingRepository, propertyBinding } from "../binding.ts"
 import { assertEquals } from "https://deno.land/std@0.96.0/testing/asserts.ts";
 
 interface TestProps {

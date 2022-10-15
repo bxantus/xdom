@@ -1,6 +1,6 @@
 # XDOM
 
-XDOM aims to be an easy to use front-end typescript library for creating user interfaces. With the help of bindings you can use the MVVM (Model-View-ViewModel) pattern, if you want. 
+XDOM aims to be an easy to use front-end typescript library for creating user interfaces. With the help of light-bindings you can use the MVVM (Model-View-ViewModel) pattern, if you want. 
 
 It's fully written in typescript, currently it doesn't even require JSX to work.
 
@@ -25,26 +25,24 @@ document.body.append(main)
 ```
 
 ### Greeting
-The following sample displays the same simple greeting message, but both the greeter and user texts are properties of an observable object.
+The following sample displays the same simple greeting message, but both the greeter and user texts are properties of a 
+greeter object (any js object can be used).   
+It uses the concept of light-bindings (or automatic value computations): a calculation is bound to value of the span's text, this
+will be recomputed in each frame, and when it changes it will be automatically applied on the span element.
+
 Try to change `greeting.greet` or `greeting.user` from the debug console, to see the changes applied.
-> **NOTE**: greeting object is fully typed, and ts language services will offer full code complete for ex. `greeting.$changes.` will list greet and user as possible observable properties.
 
-Binding syntax: `binding(valueFunction, ...observables)`:
-- valueFunction will be evaluated each time any of the observables change
-
-You may create more complex value functions using multiple observable properties, if you need to. The code below observes both greet and user, and will update the span's innerText each time, any of them change.
+You may create more complex calculations, if you need to. As these will run in each frame (while the app is active: 
+ex. browser tab in foreground), it is worth using computations which aren't too costly (probably most of them aren't).
 
 ```ts
-import { el, binding, makeObservable } from "xdom.ts"
-
-const greeting = makeObservable({
+const greeting = {
     greet: "Hello",
     user: "Word",
-})
+}
 
-const main = el("div", { class:"main" },
-    el("span", { innerText: binding(()=>`${greeting.greet} ${greeting.user}!`, 
-    greeting.$changes.greet, greeting.$changes.user) }
+const main = el("div", { class:"main" }, 
+    el("span", { text: ()=>`${greeting.greet} ${greeting.user}!` }
     ),
 )
 
