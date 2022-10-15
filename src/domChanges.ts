@@ -1,6 +1,5 @@
 // This module handles changes in the dom coming from recurring computations, light bindings, bindings and list changes
 // If you use xdom, change detection will be activated automatically by it
-import { BindingRepository } from "./binding/binding.ts";
 import { Repository as LightBindings } from "./binding/lightBinding.ts"
 import { Disposable } from "./dispose.ts";
 
@@ -86,10 +85,7 @@ export function startObservingChanges() {
         refreshHandle = requestAnimationFrame(refresh)
 }
 
-// handling normal bindings 
-// NOTE: will we need them for property bindings later on?
-export const bindingRepo = new BindingRepository<Element>()
-// TODO: later elementRepository should encompass bindings and light bindings as well
+// TODO: later elementRepository should encompass light bindings as well
 //       so we don't have to maintain 3 different maps for elements
 const elementRepository = new Map<any, Disposable>()
 
@@ -110,7 +106,6 @@ export function disposeTree(root:Element) {
         disposeTree(child)
     }
 
-    bindingRepo.clearBindings(root)
     lightBindings.clearForObject(root)
     const disp = elementRepository.get(root)
     if (disp) {
@@ -121,7 +116,6 @@ export function disposeTree(root:Element) {
 
 // Statistics  ------------------------------------------------------------------------------------------------
 export const stats = {
-    numBoundObjects: bindingRepo.bindings.size,
     numLightBoundObjects: lightBindings.bindings.size,
     numRecurringUpdates: recurring.length,
     fps: 60,
@@ -132,7 +126,6 @@ let framesInWindow = 0  // frames ellapsed since fpsWindow started
 const fpsWindowSize = 200 // will update fps each 200 ms
 
 function updateStats(timestamp:number) {
-    stats.numBoundObjects = bindingRepo.bindings.size
     stats.numLightBoundObjects = lightBindings.bindings.size
     stats.numRecurringUpdates = recurring.length
     

@@ -1,12 +1,12 @@
 // other exports
 export { dispose, make } from "./dispose.ts"
+export { type KeysMatching } from "./binding/lightBinding.ts"
 // DOM related utility library
-import { BindingOrValue, bind, type KeysMatching } from "./binding/binding.ts"
-import { calcCustomProperty, calcProperty } from "./binding/lightBinding.ts"
-import { lightBindings, startObservingChanges, bindingRepo } from "./domChanges.ts"
+import { calcCustomProperty, calcProperty, type KeysMatching } from "./binding/lightBinding.ts"
+import { lightBindings, startObservingChanges } from "./domChanges.ts"
 
 type TagNames = keyof HTMLElementTagNameMap
-type PropertyValue<T> = BindingOrValue<T> | (() => T) 
+type PropertyValue<T> = T | (() => T) 
 export type CalcOrValue<T> = T | (() => T)
 
 interface ElementProps<Element> {
@@ -139,7 +139,8 @@ export function option(props:OptionProps, ...children:Children) {
 function setProperty<Target, V>(obj:Target, prop:KeysMatching<Target, V>, val:PropertyValue<V>) {
     if (val instanceof Function) 
         calcProperty(obj, prop, val, lightBindings)
-    else bind(obj, prop, val, bindingRepo) 
+    /// @ts-ignore: obj[prop] is perfectly valid, as prop is guaranteed to be some prop of obj (maybe not true for readonly)    
+    else obj[prop] = val 
 }
 
 

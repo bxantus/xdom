@@ -1,10 +1,11 @@
 // Light bindings are not really bindings, who watch for changes to occur before recomputing changes
 // instead they are just functions (computations) which are executed repeatedly (mostly in each frame)
 // and the new value is applied whenever the computed value changes.
-// It is inspired by immeditae mode UIs, where the whole GUI is "recreated" in each frame, providing simple
+// It is inspired by immediate mode UIs, where the whole GUI is "recreated" in each frame, providing simple
 // interaction and binding to model values with the cost of a bit CPU overhead (which is already needed for preparaing the new frames).
 
-import { KeysMatching } from "./binding.ts";
+// see: https://stackoverflow.com/a/54520829, keys of T having type of V
+export type KeysMatching<T, V> = {[K in keyof T]-?: T[K] extends V ? K : never}[keyof T];
 
 type CalculatedValue<T> = ()=>T
 interface CustomProperty<T> {

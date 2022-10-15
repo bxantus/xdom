@@ -8,7 +8,7 @@ type valueFunction<T> = ()=>T
 type updateFunction<T> = (val:T) => any
 
 // see: https://stackoverflow.com/a/54520829, keys of T having type of V
-export type KeysMatching<T, V> = {[K in keyof T]-?: T[K] extends V ? K : never}[keyof T];
+type KeysMatching<T, V> = {[K in keyof T]-?: T[K] extends V ? K : never}[keyof T];
 
 export class Binding<T> {
     private valueFunction:valueFunction<T>
