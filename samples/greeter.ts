@@ -6,7 +6,7 @@ const greeting = {
 }
 
 const main = el("div", { class:"main" }, 
-    el("span", { innerText: ()=>`${greeting.greet} ${greeting.user}!` }
+    el("span", { text: ()=>`${greeting.greet} ${greeting.user}!` }
     ),
 )
 
@@ -15,12 +15,12 @@ window.onload = () => {
     // add a bunch of buttons for easier testing
     document.body.append(
         div({class:"controls greet"}, 
-            el("button", { innerText:"Say 'Hi'",  onClick: ()=> greeting.greet = "Hi" }),
-            el("button", { innerText:"Say 'Welcome'",  onClick: ()=> greeting.greet = "Welcome" }),
+            el("button", { text:"Say 'Hi'",  onClick: ()=> greeting.greet = "Hi" }),
+            el("button", { text:"Say 'Welcome'",  onClick: ()=> greeting.greet = "Welcome" }),
         ),
         div({class:"controls user"}, 
-            el("button", { innerText:"To 'World'",  onClick: ()=> greeting.user = "Word" }),
-            el("button", { innerText:"To 'John'",  onClick: ()=> greeting.user = "John" }),
+            el("button", { text:"To 'World'",  onClick: ()=> greeting.user = "Word" }),
+            el("button", { text:"To 'John'",  onClick: ()=> greeting.user = "John" }),
         )
     )
 }

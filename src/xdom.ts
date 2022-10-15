@@ -12,7 +12,7 @@ export type CalcOrValue<T> = T | (() => T)
 interface ElementProps<Element> {
     id?:string
     class?: PropertyValue<string>
-    innerText?:PropertyValue<string> // todo: rename it simply to text, and use textContent (see mdn about innerText and textContent)
+    text?:PropertyValue<string|null> 
     visible?:CalcOrValue<boolean>
     onClick?:(this:Element, ev: MouseEvent)=>void
     // todo: needs more event handlers: focus events, key events, input events, animation events
@@ -26,8 +26,8 @@ export function el<K extends TagNames>(tagname:K, props?:ElementProps<HTMLElemen
         element.id = props.id
     if (props?.class)
         setProperty(element, "className", props.class)
-    if (props?.innerText)
-        setProperty(element, "innerText", props.innerText)
+    if (props?.text)
+        setProperty(element, "textContent", props.text)
     if (props?.onClick)
         element.onclick = ev => props.onClick!.call(result, ev)
     if (props?.visible != undefined) {
