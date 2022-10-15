@@ -36,13 +36,15 @@ You may create more complex calculations, if you need to. As these will run in e
 ex. browser tab in foreground), it is worth using computations which aren't too costly (probably most of them aren't).
 
 ```ts
+import { calc, el } from "xdom.ts"
+
 const greeting = {
     greet: "Hello",
     user: "Word",
 }
 
 const main = el("div", { class:"main" }, 
-    el("span", { text: ()=>`${greeting.greet} ${greeting.user}!` }
+    el("span", { text: calc(()=>`${greeting.greet} ${greeting.user}!`) }
     ),
 )
 

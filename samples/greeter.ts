@@ -1,4 +1,4 @@
-import { div, el } from "../src/xdom.ts"
+import { calc, div, el } from "../src/xdom.ts"
 
 const greeting = {
     greet: "Hello",
@@ -6,7 +6,7 @@ const greeting = {
 }
 
 const main = el("div", { class:"main" }, 
-    el("span", { text: ()=>`${greeting.greet} ${greeting.user}!` }
+    el("span", { text: calc(()=>`${greeting.greet} ${greeting.user}!`) }
     ),
 )
 

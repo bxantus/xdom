@@ -1,13 +1,13 @@
 // other exports
 export { dispose, make } from "./dispose.ts"
-export { type KeysMatching } from "./binding/lightBinding.ts"
+export { calc, type KeysMatching } from "./binding/lightBinding.ts"
 // DOM related utility library
-import { calcCustomProperty, calcProperty, type KeysMatching } from "./binding/lightBinding.ts"
+import { calcCustomProperty, calcProperty, type KeysMatching, CalculatedValue } from "./binding/lightBinding.ts"
 import { lightBindings, startObservingChanges } from "./domChanges.ts"
 
 type TagNames = keyof HTMLElementTagNameMap
-type PropertyValue<T> = T | (() => T) 
-export type CalcOrValue<T> = T | (() => T)
+export type CalcOrValue<T> = T | CalculatedValue<T>
+type PropertyValue<T> = CalcOrValue<T> 
 
 interface ElementProps<Element> {
     id?:string
@@ -31,7 +31,7 @@ export function el<K extends TagNames>(tagname:K, props?:ElementProps<HTMLElemen
     if (props?.onClick)
         element.onclick = ev => props.onClick!.call(result, ev)
     if (props?.visible != undefined) {
-        if (props.visible instanceof Function) {
+        if (props.visible instanceof CalculatedValue) {
             // NOTE: attaches a custom computed property to this element which has it's own getter/setter
             //       when the tree is diposed this lightbinding with the customProperty holder will be removed from lightBindings
             const visibilityUpdater = {
@@ -137,7 +137,7 @@ export function option(props:OptionProps, ...children:Children) {
 
 
 function setProperty<Target, V>(obj:Target, prop:KeysMatching<Target, V>, val:PropertyValue<V>) {
-    if (val instanceof Function) 
+    if (val instanceof CalculatedValue) 
         calcProperty(obj, prop, val, lightBindings)
     /// @ts-ignore: obj[prop] is perfectly valid, as prop is guaranteed to be some prop of obj (maybe not true for readonly)    
     else obj[prop] = val 

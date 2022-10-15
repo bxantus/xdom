@@ -7,7 +7,14 @@
 // see: https://stackoverflow.com/a/54520829, keys of T having type of V
 export type KeysMatching<T, V> = {[K in keyof T]-?: T[K] extends V ? K : never}[keyof T];
 
-type CalculatedValue<T> = ()=>T
+export class CalculatedValue<T>  {
+    constructor(public compute:()=>T) {}
+}
+
+export function calc<T>(compute:()=>T) {
+    return new CalculatedValue(compute)
+}
+
 interface CustomProperty<T> {
     name:string
     get:()=>T
@@ -48,7 +55,7 @@ export class Repository {
 }
 
 function updatePropValue<T>(obj:any, lb:LightBinding<T>) {
-    const newVal = lb.calc()
+    const newVal = lb.calc.compute()
     if (typeof lb.prop == "object") { // custom prop
         const currentVal = lb.prop.get()
         if (currentVal != newVal)
@@ -58,7 +65,7 @@ function updatePropValue<T>(obj:any, lb:LightBinding<T>) {
 }
 
 export function calcProperty<Target, V>(obj:Target, prop:KeysMatching<Target, V>, calc:CalculatedValue<V>, repo?:Repository) {
-    (obj as any)[prop] = calc()
+    (obj as any)[prop] = calc.compute()
     repo?.add(obj, prop, calc)
 }
 

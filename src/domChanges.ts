@@ -116,6 +116,7 @@ export function disposeTree(root:Element) {
 
 // Statistics  ------------------------------------------------------------------------------------------------
 export const stats = {
+    timestamp: 0, ///< the current timestamp, it can be used in calculations to update something continously (like modulate the colors etc.)
     numLightBoundObjects: lightBindings.bindings.size,
     numRecurringUpdates: recurring.length,
     fps: 60,
@@ -126,6 +127,7 @@ let framesInWindow = 0  // frames ellapsed since fpsWindow started
 const fpsWindowSize = 200 // will update fps each 200 ms
 
 function updateStats(timestamp:number) {
+    stats.timestamp = timestamp
     stats.numLightBoundObjects = lightBindings.bindings.size
     stats.numRecurringUpdates = recurring.length
     

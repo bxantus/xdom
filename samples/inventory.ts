@@ -1,5 +1,5 @@
 import { listItems } from "../src/list.ts";
-import { div, el, span } from "../src/xdom.ts"
+import { calc, div, el, span } from "../src/xdom.ts"
 import { stats } from "../src/domChanges.ts"
 import { ObservableList } from "../src/objects/observableList.ts";
 
@@ -15,12 +15,12 @@ interface Item {
 
 function inventoryItem(item:Item) {
     return div({},
-        el("h2", {text: ()=> item.name}),
-        el("p", { text: ()=>`Count: ${item.count}`}),
+        el("h2", { text: calc(()=> item.name) }),
+        el("p",  { text: calc(()=>`Count: ${item.count}`) }),
         el("p", {},
             span({text:"Owner: "}),
-            span({class:"name", text:()=>`${item.owner.name} `}),
-            span({class:"prename", text:()=>item.owner.prename}),
+            span({class:"name", text: calc(()=>`${item.owner.name} `)}),
+            span({class:"prename", text: calc(()=>item.owner.prename)}),
         )
     )
 }
@@ -40,9 +40,9 @@ window.onload = () => {
     document.body.append(
         div({},
             el("p", {text:"Stats: ", class:"stats"},
-                span({text:()=>`[LightBound objs: ${stats.numLightBoundObjects}], `}),
-                span({text:()=>`[Recurring updates: ${stats.numRecurringUpdates}]`}),
-                span({text:()=>`[Fps: ${stats.fps}]`}),
+                span({text:calc(()=>`[LightBound objs: ${stats.numLightBoundObjects}], `)}),
+                span({text:calc(()=>`[Recurring updates: ${stats.numRecurringUpdates}]`)}),
+                span({text:calc(()=>`[Fps: ${stats.fps}]`)}),
             )
         ),
 
