@@ -1,6 +1,7 @@
 // other exports
 export { dispose, make } from "./dispose.ts"
 export { calc, type KeysMatching } from "./binding/lightBinding.ts"
+export { disposeTree, registerDisposer } from "./domChanges.ts"
 // DOM related utility library
 import { calcCustomProperty, calcProperty, type KeysMatching, CalculatedValue } from "./binding/lightBinding.ts"
 import { lightBindings, startObservingChanges } from "./domChanges.ts"
@@ -21,11 +22,12 @@ interface ElementProps<Element> {
 /**
  * Components can be any kind of objects, they are only required to provide an element property
  */
-interface Component {
+export interface Component {
     element:HTMLElement
 }
 
-type Children = (HTMLElement|Component|string|undefined)[]
+export type ElementChild = (HTMLElement|Component|string|undefined)
+type Children = ElementChild[]
 export function el<K extends TagNames>(tagname:K, props?:ElementProps<HTMLElementTagNameMap[K]>, ...children:Children):HTMLElementTagNameMap[K] {
     const result = document.createElement(tagname)
     const element = result as HTMLElement
