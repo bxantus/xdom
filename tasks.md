@@ -7,5 +7,7 @@
   Be sure to attach control object to the underlying html element, via data prop, or a map, so the control can be removed when needed
 
 ## Todo
+- Add support for attaching elements to already created dom elements (ex. coming from the server generated html)
+  > NOTE: currently you can add children to such elements without extra work. Modifying existing elements what's missing 
 - Support light bindings where the result of a (mostly fast) calculated value is transformed (like time formatting) before applying
   to the target property. This would use an alternative notation to calc, like `formatted` or something similar 
