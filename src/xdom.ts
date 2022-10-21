@@ -18,7 +18,14 @@ interface ElementProps<Element> {
     // todo: needs more event handlers: focus events, key events, input events, animation events
 }
 
-type Children = (HTMLElement|string)[]
+/**
+ * Components can be any kind of objects, they are only required to provide an element property
+ */
+interface Component {
+    element:HTMLElement
+}
+
+type Children = (HTMLElement|Component|string|undefined)[]
 export function el<K extends TagNames>(tagname:K, props?:ElementProps<HTMLElementTagNameMap[K]>, ...children:Children):HTMLElementTagNameMap[K] {
     const result = document.createElement(tagname)
     const element = result as HTMLElement
@@ -44,8 +51,14 @@ export function el<K extends TagNames>(tagname:K, props?:ElementProps<HTMLElemen
         } else if (!props.visible) hide()
     }
     
-    if (children)
-        element.append(...children)
+    if (children) {
+        for (const child of children) {
+            if (!child) continue
+            if (typeof child == "string" || child instanceof HTMLElement)
+                element.append(child)
+            else element.append(child.element)
+        }
+    }
     return result
 } 
 export function div(props:ElementProps<HTMLDivElement>, ...children:Children) {
