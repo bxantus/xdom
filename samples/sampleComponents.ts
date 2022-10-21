@@ -96,6 +96,14 @@ class Controller {
         this.display(el)
     }
 
+    /// sets or replaces the top element on the stack
+    set(el:ElementChild|ElementBuilder) {
+        if (this.stack.length == 0)
+            this.stack.push(el)
+        else this.stack[this.stack.length - 1] = el
+        this.display(el)
+    }
+
     private display(el:ElementChild|ElementBuilder) {
         if (this.element.childElementCount > 0) {
             // todo: should only dispose when it will be recreated by an elementBuilder

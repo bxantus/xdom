@@ -2,9 +2,9 @@
 - Finish `visible` handling _(OPTIONAL as interfaces won't be harmed)_: currently it is working fine, but invisible parts of the dom should have their bindings turned off
   except for the current visible binding
 - Add more props and event handlers to the element interface (could scan draw&show also dom.d.ts for other props and events)
-- Add support for "components" or controls. element builder functions should accept controls as their children too.
-  Controls could be represented with an interface having an element property of html element.
-  Be sure to attach control object to the underlying html element, via data prop, or a map, so the control can be removed when needed
+- Be sure to attach control object to the underlying html element, via data prop, or a map, so the control can be removed when needed
+- Experiment with element/component insertion and deletion from the dom. THey should be deactivated and activated, the library should provide
+some means for that. This is related to the visibility handling task!
 
 ## Todo
 - Add support for attaching elements to already created dom elements (ex. coming from the server generated html)
