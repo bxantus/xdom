@@ -106,7 +106,9 @@ export function disposeTree(root:Element) {
         disposeTree(child)
     }
 
-    lightBindings.clearForObject(root)
+    const rootId = (root as HTMLElement).dataset.xdomId
+    if (rootId)
+        lightBindings.clearForObjectId(rootId)
     const disp = elementRepository.get(root)
     if (disp) {
         disp.dispose()

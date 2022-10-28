@@ -49,7 +49,7 @@ export function el<K extends TagNames>(tagname:K, props?:ElementProps<HTMLElemen
                 get() { return this.visible },
                 set(v:boolean) { this.visible = v; v ? show(element) : hide(element) }
             }
-            calcCustomProperty(element, visibilityUpdater, props.visible, lightBindings)
+            calcCustomProperty(getOrCreateXdomId(element), element, visibilityUpdater, props.visible, lightBindings)
         } else if (!props.visible) hide()
     }
     
@@ -150,10 +150,18 @@ export function option(props:OptionProps, ...children:Children) {
     return element
 }
 
+let nextId = 1
+function getOrCreateXdomId(element:HTMLElement) {
+    if (!element.dataset.xdomId)
+        element.dataset.xdomId = `x-${nextId++}`
+    return element.dataset.xdomId
+}
 
-function setProperty<Target, V>(obj:Target, prop:KeysMatching<Target, V>, val:PropertyValue<V>) {
-    if (val instanceof CalculatedValue) 
-        calcProperty(obj, prop, val, lightBindings)
+function setProperty<Target extends HTMLElement, V>(obj:Target, prop:KeysMatching<Target, V>, val:PropertyValue<V>) {
+    if (val instanceof CalculatedValue) {
+        const xdomId = getOrCreateXdomId(obj)
+        calcProperty(xdomId, obj, prop, val, lightBindings)
+    }
     /// @ts-ignore: obj[prop] is perfectly valid, as prop is guaranteed to be some prop of obj (maybe not true for readonly)    
     else obj[prop] = val 
 }

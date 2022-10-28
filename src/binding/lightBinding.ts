@@ -25,30 +25,42 @@ export interface LightBinding<T> {
     calc:CalculatedValue<T>
 }
 
-export class Repository {
-    bindings = new Map<any, LightBinding<any>[]>()
+class BindingsForObject<T extends object, V> {
+    objRef:WeakRef<T>
+    bindings:LightBinding<V>[] = []
+    constructor(obj:T, firstBinding?:LightBinding<V>) {
+        this.objRef = new WeakRef(obj)
+        if (firstBinding)
+            this.bindings.push(firstBinding)
+    }
+}
 
-    add<T>(obj:any, prop:string|symbol|number|CustomProperty<T>, calc:CalculatedValue<T>|undefined) {
+export class Repository {
+    bindings = new Map<string, BindingsForObject<any, any>>()
+
+    add<T>(objId:string, obj:any, prop:string|symbol|number|CustomProperty<T>, calc:CalculatedValue<T>|undefined) {
         if (!calc) return
-        const list = this.bindings.get(obj)
+        const bindingsForObj = this.bindings.get(obj)
         const binding:LightBinding<T> = { prop, calc }
-        if (!list) {
-            this.bindings.set(obj, [binding])
-        } else list.push(binding)
+        if (!bindingsForObj) {
+            this.bindings.set(objId, new BindingsForObject(obj, binding))
+        } else bindingsForObj.bindings.push(binding)
         return binding
     }
 
-    clearForObject(obj:any) {
-        this.bindings.delete(obj)
+    clearForObjectId(objId:string) {
+        this.bindings.delete(objId)
     }
 
-    has(obj:any) { return this.bindings.has(obj) }
+    has(objId:string) { return this.bindings.has(objId) }
 
-    // refreshes all calculated bindings for object
-    refresh(obj:any) {
-        const list = this.bindings.get(obj)
-        if (!list) return
-        for (const lb of list) {
+    // refreshes all calculated bindings for object identified by objId
+    refresh(objId:string) {
+        const bindingsForObj = this.bindings.get(objId)
+        // get object from weakref if possible
+        const obj = bindingsForObj?.objRef.deref()
+        if (!obj || !bindingsForObj) return
+        for (const lb of bindingsForObj?.bindings) {
             updatePropValue(obj, lb)
         }
     }
@@ -64,12 +76,12 @@ function updatePropValue<T>(obj:any, lb:LightBinding<T>) {
         obj[lb.prop] = newVal 
 }
 
-export function calcProperty<Target, V>(obj:Target, prop:KeysMatching<Target, V>, calc:CalculatedValue<V>, repo?:Repository) {
+export function calcProperty<Target, V>(objectId:string, obj:Target, prop:KeysMatching<Target, V>, calc:CalculatedValue<V>, repo?:Repository) {
     (obj as any)[prop] = calc.compute()
-    repo?.add(obj, prop, calc)
+    repo?.add(objectId, obj, prop, calc)
 }
 
-export function calcCustomProperty<Target, V>(obj:Target, customProp:CustomProperty<V>, calc:CalculatedValue<V>, repo?:Repository) {
+export function calcCustomProperty<Target, V>(objectId:string, obj:Target, customProp:CustomProperty<V>, calc:CalculatedValue<V>, repo?:Repository) {
     updatePropValue(obj, { prop:customProp, calc })
-    repo?.add(obj, customProp, calc)
+    repo?.add(objectId, obj, customProp, calc)
 }
