@@ -105,12 +105,6 @@ class Controller {
     }
 
     private display(el:ElementChild|ElementBuilder) {
-        if (this.element.childElementCount > 0) {
-            // todo: should only dispose when it will be recreated by an elementBuilder
-            //       controller only can pause bindings otherwise elements won't be reusable
-            // disposeTree(this.element.children[0]) // only one child
-        }
-        
         const newContent = el instanceof Function ? el() : el
         if (newContent)
             this.element.replaceChildren(newContent instanceof HTMLElement || typeof newContent == "string" ? newContent : newContent.element)

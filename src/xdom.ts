@@ -150,10 +150,17 @@ export function option(props:OptionProps, ...children:Children) {
     return element
 }
 
+export function getXdomId(element:HTMLElement) {
+    return element.dataset.xdomId
+}
+
 let nextId = 1
 function getOrCreateXdomId(element:HTMLElement) {
-    if (!element.dataset.xdomId)
+    if (!element.dataset.xdomId) {
         element.dataset.xdomId = `x-${nextId++}`
+        // todo: should add element to the finalization registry of domChanges, so it can cleanup
+        //       after dom elements are garbage collected
+    }
     return element.dataset.xdomId
 }
 
