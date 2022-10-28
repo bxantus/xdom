@@ -8,6 +8,8 @@ export const lightBindings = new LightBindings()
 
 /// XDOM Node
 class XDNode {
+    // TODO: we could refresh visible property directly here
+    //       by having that we could optimize in the traversal, skipping children and props of this node
     children:XDNode[] = []
     constructor(public id:string) {}
     
