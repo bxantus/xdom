@@ -3,7 +3,7 @@
 
 import { listItems } from "../src/list.ts";
 import { ObservableList } from "../src/objects/observableList.ts";
-import { div, span, calc, ElementChild, disposeTree, registerDisposer } from "../src/xdom.ts";
+import { div, span, calc, ElementChild, attachXdomListenerTo } from "../src/xdom.ts";
 
 interface AppDesc {
     label:string
@@ -26,8 +26,12 @@ class AppBar {
         const apps = (props.apps instanceof ObservableList) ? props.apps : ObservableList.from(props.apps)
         listItems(this.element, apps, this.appTemplate)
 
-        // todo: should attach itself to the dom if possible, and should be disposed at the end
+        // attaches itself to the dom
+        attachXdomListenerTo(this.element, this)
     }
+
+    onConnected() { console.log("appbar connected") }
+    onDisconnected() { console.log("appbar disconnected") }
 
     /**
      * This function is used to display the list of apps inside the appbar
@@ -69,13 +73,12 @@ class Controller {
             this.next(props.initialContent)
         }
 
-        // NOTE: tries to attach itself to the dom (to root element), and should be disposed at the end
-        registerDisposer(this.element, this)
+        // NOTE: tries to attach itself to the dom (to root element)
+        attachXdomListenerTo(this.element, this)
     }
 
-    dispose() {
-
-    }
+    onConnected() {}
+    onDisconnected() {}
 
     /// Pushes el as the next element on the stack
     next(el:ElementChild|ElementBuilder) {

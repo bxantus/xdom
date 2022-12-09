@@ -1,7 +1,6 @@
 // other exports
 export { dispose, make } from "./dispose.ts"
 export { calc, type KeysMatching } from "./binding/lightBinding.ts"
-export { disposeTree, registerDisposer } from "./domChanges.ts"
 // DOM related utility library
 import { type KeysMatching, CalculatedValue } from "./binding/lightBinding.ts"
 import { onscreenNodes, startObservingChanges } from "./domChanges.ts"
@@ -24,6 +23,21 @@ interface ElementProps<Element> {
  */
 export interface Component {
     element:HTMLElement
+}
+
+/**
+ * Object conforming to the XDListener interface may be linked with XDNodes (thus to DOM objects)
+ * and will be notified when the related DOM element is connected or diconnected from the DOM.
+ * Components holding extra resources (like observing list changes etc.) will implement this interface as well
+ */
+export interface XDListener {
+    onConnected():void
+    onDisconnected():void
+}
+
+export function attachXdomListenerTo(element:HTMLElement, listener:XDListener) {
+    const xdNode = onscreenNodes.getOrCreateForElement(element)
+    xdNode.addListener(listener)
 }
 
 export type ElementChild = (HTMLElement|Component|string|undefined)

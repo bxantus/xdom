@@ -2,11 +2,13 @@
 // If you use xdom, change detection will be activated automatically by it
 import { BindingsForObject, LightBinding } from "./binding/lightBinding.ts"
 import { Disposable } from "./dispose.ts";
+import { XDListener } from "./xdom.ts";
 
 
 /// XDOM Node
 class XDNode {
     private isVisible = true
+    private isConnected = false // becomes true when the associated element will be attached to the DOM
     // if this node has an associated visible binding, it can be checked and refreshed here
     visibleBinding?:LightBinding<boolean>
     bindings?:BindingsForObject<HTMLElement, any>
@@ -17,27 +19,45 @@ class XDNode {
         this.isVisible = this.visibleBinding.calc.compute()
     }
 
+    listeners?:XDListener[]
 
-    children:XDNode[] = []
-    constructor(forElement?:HTMLElement) {
-        if (forElement)
-            this.bindings = new BindingsForObject(forElement)
+    addListener(listener:XDListener) {
+        if (this.isConnected) // fire connected for the listener
+            listener.onConnected()
+        if (!this.listeners)
+            this.listeners = [listener]
+        else this.listeners.push(listener)
     }
 
+    constructor(forElement?:HTMLElement) {
+        if (forElement)
+        this.bindings = new BindingsForObject(forElement)
+    }
+    
     // child manipulation
+    children:XDNode[] = []
     /// returns the newly added node
-    add(node:XDNode) {
+    addChild(node:XDNode) {
         this.children.push(node)
+        node.connected()
         return node
     }
 
-    remove(node:XDNode) {
+    removeChild(node:XDNode) {
         const nodeIdx = this.children.indexOf(node)
         this.children.splice(nodeIdx, 1) // this removes the whole subtree together with node
+        
+        node.removeSubTree()
+    }
+
+    // remove and disconnect all nodes of this subtree starting with this one 
+    private removeSubTree() { 
+        this.disconnected()
         // will remove the whole subtree, and their children as they can be mutated outside of our mutation observer
         // so the tree has to be rebuilt fully on insertion
-        for (const n of XDNode.nodesOfTree(node))
-            n.children.splice(0) // remove all children
+        for (const child of this.children)
+            child.removeSubTree()
+        this.children.splice(0, Infinity)
     }
 
     /// iterable preorder travelsal for all children of the given node
@@ -45,6 +65,22 @@ class XDNode {
         yield node;
         for (const child of node.children)
             yield* XDNode.nodesOfTree(child)
+    }
+
+    /// called when this xdnode is connected to the DOM
+    private connected() {
+        this.isConnected = true
+        if (!this.listeners) return
+        for (const l of this.listeners)
+            l.onConnected()
+    }
+
+    /// called when this xdnode is disconnected from the DOM
+    private disconnected() {
+        this.isConnected = false
+        if (!this.listeners) return
+        for (const l of this.listeners)
+            l.onDisconnected()
     }
 }
 
@@ -170,7 +206,7 @@ function getXdomParent(elParent:HTMLElement|null) {
 const elementInserted = (element:HTMLElement, xdomParent:XDNode) => {
     const xdNode = onscreenNodes.getForElement(element)
     if (xdNode) 
-        xdomParent = xdomParent.add(xdNode)
+        xdomParent = xdomParent.addChild(xdNode)
     // check all children elements as well having xdom nodes, this will rebuild the xdnode tree starting from element
     for (let idx = 0; idx < element.children.length; ++idx) {
         const child = element.children[idx]
@@ -182,7 +218,7 @@ const elementInserted = (element:HTMLElement, xdomParent:XDNode) => {
 const elementRemoved = (element:HTMLElement, xdomParent:XDNode) => {
     const xdNode = onscreenNodes.getForElement(element)
     if (xdNode) {
-        xdomParent.remove(xdNode) // NOTE: this removes all children as well
+        xdomParent.removeChild(xdNode) // NOTE: this removes all children as well
     } else { // have to check children
         for (let idx = 0; idx < element.children.length; ++idx) {
             const child = element.children[idx]
@@ -221,42 +257,6 @@ export function startObservingChanges() {
             childList: true
         })
     })
-}
-
-
-// TODO: elementRepository will be transformed to contain various things attached to an xdom element
-//       the key will be element id, it can have a component registered, and maybe multiple disposers (or resources) listed.
-//       One such resource can be the lister attached to the list head
-//       These will be notified the wlement is detached, when it is attached and when the whole stuff is diposed of
-//       This should be renamed probably to attachedResources. Components should have an easy API to register themselves with their
-//       head element 
-const elementRepository = new Map<any, Disposable>()
-
-// When resources for e are cleared (like the dom tree is released), disposer will be run
-// TODO: rename it to registerResource/or component
-export function registerDisposer(e:any, disp:Disposable) {
-    // NOTE: hopefully only one disposer will be registered for each element...
-    if (elementRepository.has(e))
-        console.error("Element has already registered a disposer, this will be overwritten now!", {
-            element:e, disposer: elementRepository.get(e)
-        })
-
-    elementRepository.set(e, disp)
-}
-
-// todo: this function will be removed when associated resources will be refreshed on node addition and removal
-//       see the todos above regarding element repo
-export function disposeTree(root:Element) {
-    // first children are disposed, so manipulating child items from dipose won't interfere with releasing resources
-    for (let child = root.firstElementChild; child ; child = child.nextElementSibling) {
-        disposeTree(child)
-    }
-
-    const disp = elementRepository.get(root)
-    if (disp) {
-        disp.dispose()
-        elementRepository.delete(root)
-    }
 }
 
 // Statistics  ------------------------------------------------------------------------------------------------

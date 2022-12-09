@@ -1,5 +1,7 @@
 ## Preparing for 1.0 release
-- Experiment with element/component insertion and deletion from the dom. They should be deactivated and activated. This is related to the visibility handling task!
+- Fix the missing calls for show/hide on visibility updates. Setting visible binding should update visibility right ahead
+- When a node becomes invisible act as the subtree became disconnected. When it becomes visible again connect back
+  - Adding new nodes should take into account effective visibility (for ex. parent of parent may be invisible)
 - Be sure to attach component object to the underlying html element, via data prop, or a map, so the component can be removed when needed
 - Add more props and event handlers to the element interface (could scan draw&show also dom.d.ts for other props and events)
 - Clean up listItems interface
