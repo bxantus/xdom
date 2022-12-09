@@ -1,6 +1,7 @@
 import { Disposable } from "./dispose.ts";
-import { scheduleUpdate, disposeTree, registerDisposer } from "./domChanges.ts";
+import { scheduleUpdate } from "./domChanges.ts";
 import { ObservableList } from "./objects/observableList.ts";
+import { attachXdomListenerTo, XDListener } from "./xdom.ts";
 
 type templateFunc<ET> = (item:ET)=>HTMLElement
 
@@ -17,39 +18,38 @@ export function listItems<ET>(listHead:HTMLElement, items:ObservableList<ET>, te
     }
     // will schedule computation checked by xdom in each frame, in the case of observable lists
     const updater = new ListUpdater(listHead, items, template)
-    registerDisposer(listHead, updater)
-    updater.update()
     
     return listHead
 }
 
-class ListUpdater<ET> {
-    listChanges:Disposable
+class ListUpdater<ET> implements XDListener {
+    listChanges?:Disposable
     constructor(private listHead:HTMLElement, items:ObservableList<ET>, private template:templateFunc<ET>) {
         this._items = items
-        
+        attachXdomListenerTo(listHead, this)
+    }
+    onConnected(): void {
+        this.update() // update each time when connected, list could have changed meanwhile
         let updateScheduled = false
-        this.listChanges = items.$changes.list.subscribe(()=>{
+        this.listChanges = this.items.$changes.list.subscribe(()=>{
             if (updateScheduled)
                 return
             scheduleUpdate(()=> {
                 updateScheduled = false
                 this.update()
             })
-        }) 
-        
-        
+        })
     }
+    onDisconnected(): void {
+        this.listChanges?.dispose()
+    }
+
     private _items:ObservableList<ET>
     get items() { return this._items }
     
     private lastPass:ET[] = []
     update() {
         this.lastPass = updateList(this.listHead, this.lastPass, this.items, this.template)
-    }
-
-    dispose() {
-        this.listChanges.dispose()
     }
 }
 
@@ -74,7 +74,6 @@ function updateList<ET>(listHead:HTMLElement, lastPass:ET[], items:ObservableLis
     if (items.length < lastPass.length) {
         // drop last items
         for (let i = lastPass.length - 1; i >= items.length; --i) {
-            disposeTree(listHead.children[i])
             listHead.children[i].remove()
         }
         lastPass.splice(items.length, lastPass.length - items.length)
@@ -116,7 +115,6 @@ function renderElements<ET>(listHead:HTMLElement, items:ObservableList<ET>, rang
 function removeChildrenInRange(listHead:HTMLElement, range:Range) {
     const end = Math.min(listHead.children.length, range.end)
     for (let i = end - 1; i >= range.start; --i) {
-        disposeTree(listHead.children[i])
         listHead.children[i].remove()
     }
 }

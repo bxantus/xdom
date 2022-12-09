@@ -1,24 +1,47 @@
 // other exports
 export { dispose, make } from "./dispose.ts"
+export { calc, type KeysMatching } from "./binding/lightBinding.ts"
 // DOM related utility library
-import { BindingOrValue, bind, type KeysMatching } from "./binding/binding.ts"
-import { calcCustomProperty, calcProperty } from "./binding/lightBinding.ts"
-import { lightBindings, startObservingChanges, bindingRepo } from "./domChanges.ts"
+import { type KeysMatching, CalculatedValue } from "./binding/lightBinding.ts"
+import { getOrCreateXdNodeForElement, startObservingChanges } from "./domChanges.ts"
 
 type TagNames = keyof HTMLElementTagNameMap
-type PropertyValue<T> = BindingOrValue<T> | (() => T) 
-export type CalcOrValue<T> = T | (() => T)
+export type CalcOrValue<T> = T | CalculatedValue<T>
+type PropertyValue<T> = CalcOrValue<T> 
 
 interface ElementProps<Element> {
     id?:string
     class?: PropertyValue<string>
-    innerText?:PropertyValue<string> // todo: rename it simply to text, and use textContent (see mdn about innerText and textContent)
+    text?:PropertyValue<string|null> 
     visible?:CalcOrValue<boolean>
     onClick?:(this:Element, ev: MouseEvent)=>void
     // todo: needs more event handlers: focus events, key events, input events, animation events
 }
 
-type Children = (HTMLElement|string)[]
+/**
+ * Components can be any kind of objects, they are only required to provide an element property
+ */
+export interface Component {
+    element:HTMLElement
+}
+
+/**
+ * Object conforming to the XDListener interface may be linked with XDNodes (thus to DOM objects)
+ * and will be notified when the related DOM element is connected or diconnected from the DOM.
+ * Components holding extra resources (like observing list changes etc.) will implement this interface as well
+ */
+export interface XDListener {
+    onConnected():void
+    onDisconnected():void
+}
+
+export function attachXdomListenerTo(element:HTMLElement, listener:XDListener) {
+    const xdNode = getOrCreateXdNodeForElement(element)
+    xdNode.addListener(listener)
+}
+
+export type ElementChild = (HTMLElement|Component|string|undefined)
+type Children = ElementChild[]
 export function el<K extends TagNames>(tagname:K, props?:ElementProps<HTMLElementTagNameMap[K]>, ...children:Children):HTMLElementTagNameMap[K] {
     const result = document.createElement(tagname)
     const element = result as HTMLElement
@@ -26,26 +49,27 @@ export function el<K extends TagNames>(tagname:K, props?:ElementProps<HTMLElemen
         element.id = props.id
     if (props?.class)
         setProperty(element, "className", props.class)
-    if (props?.innerText)
-        setProperty(element, "innerText", props.innerText)
+    if (props?.text)
+        setProperty(element, "textContent", props.text)
     if (props?.onClick)
         element.onclick = ev => props.onClick!.call(result, ev)
     if (props?.visible != undefined) {
-        if (props.visible instanceof Function) {
-            // NOTE: attaches a custom computed property to this element which has it's own getter/setter
-            //       when the tree is diposed this lightbinding with the customProperty holder will be removed from lightBindings
-            const visibilityUpdater = {
-                name: "visible",
-                visible: true,
-                get() { return this.visible },
-                set(v:boolean) { this.visible = v; v ? show(element) : hide(element) }
-            }
-            calcCustomProperty(element, visibilityUpdater, props.visible, lightBindings)
+        if (props.visible instanceof CalculatedValue) {
+            // NOTE: visible binding is special, it should be set on the custom visibleBinding prop on the associated xdNode
+            const xdNode = getOrCreateXdNodeForElement(element)
+            xdNode.visibleBinding = { prop: "visible", calc: props.visible } 
+            xdNode.updateVisible() // make sure that the visibility field is refreshed right away, and the elements get hidden when visibility is false
         } else if (!props.visible) hide()
     }
     
-    if (children)
-        element.append(...children)
+    if (children) {
+        for (const child of children) {
+            if (!child) continue
+            if (typeof child == "string" || child instanceof HTMLElement)
+                element.append(child)
+            else element.append(child.element)
+        }
+    }
     return result
 } 
 export function div(props:ElementProps<HTMLDivElement>, ...children:Children) {
@@ -135,11 +159,15 @@ export function option(props:OptionProps, ...children:Children) {
     return element
 }
 
-
-function setProperty<Target, V>(obj:Target, prop:KeysMatching<Target, V>, val:PropertyValue<V>) {
-    if (val instanceof Function) 
-        calcProperty(obj, prop, val, lightBindings)
-    else bind(obj, prop, val, bindingRepo) 
+function setProperty<Target extends HTMLElement, V>(obj:Target, prop:KeysMatching<Target, V>, val:PropertyValue<V>) {
+    if (val instanceof CalculatedValue) {
+        /// @ts-ignore: obj[prop] is perfectly valid, as prop is guaranteed to be some prop of obj (maybe not true for readonly)    
+        obj[prop] = val.compute()
+        const xdNode = getOrCreateXdNodeForElement(obj);
+        xdNode.bindings!.bindings.push( { prop, calc:val })
+    }
+    /// @ts-ignore: obj[prop] is perfectly valid, as prop is guaranteed to be some prop of obj (maybe not true for readonly)    
+    else obj[prop] = val 
 }
 
 

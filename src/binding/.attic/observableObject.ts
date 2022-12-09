@@ -1,5 +1,5 @@
-import { SubscriptionRepository, type PropChanges, AnyPropChange } from "./subscriptions.ts"
-export { any } from './subscriptions.ts'
+import { SubscriptionRepository, type PropChanges, AnyPropChange } from "../subscriptions.ts"
+export { any } from '../subscriptions.ts'
 
 export function makeObservable<T>(initialProps:T):ObservableObject<T> {
     const oo = new ObservableObjectBase()
