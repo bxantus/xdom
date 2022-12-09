@@ -1,25 +1,45 @@
 // This module handles changes in the dom coming from recurring computations, light bindings, bindings and list changes
 // If you use xdom, change detection will be activated automatically by it
-import { LightBinding, Repository as LightBindings } from "./binding/lightBinding.ts"
+import { BindingsForObject, LightBinding } from "./binding/lightBinding.ts"
 import { Disposable } from "./dispose.ts";
-import { getXdomId } from "./xdom.ts";
 
-export const lightBindings = new LightBindings()
 
 /// XDOM Node
 class XDNode {
+    private isVisible = true
     // if this node has an associated visible binding, it can be checked and refreshed here
     visibleBinding?:LightBinding<boolean>
-    private isVisible = true
+    bindings?:BindingsForObject<HTMLElement, any>
+    
     get visible() { return this.isVisible }
     updateVisible() {
         if (!this.visibleBinding) return
         this.isVisible = this.visibleBinding.calc.compute()
     }
 
+
     children:XDNode[] = []
-    constructor(public id:string) {}
-    
+    constructor(forElement?:HTMLElement) {
+        if (forElement)
+            this.bindings = new BindingsForObject(forElement)
+    }
+
+    // child manipulation
+    /// returns the newly added node
+    add(node:XDNode) {
+        this.children.push(node)
+        return node
+    }
+
+    remove(node:XDNode) {
+        const nodeIdx = this.children.indexOf(node)
+        this.children.splice(nodeIdx, 1) // this removes the whole subtree together with node
+        // will remove the whole subtree, and their children as they can be mutated outside of our mutation observer
+        // so the tree has to be rebuilt fully on insertion
+        for (const n of XDNode.nodesOfTree(node))
+            n.children.splice(0) // remove all children
+    }
+
     /// iterable preorder travelsal for all children of the given node
     static *nodesOfTree(node:XDNode):Generator<XDNode> {
         yield node;
@@ -33,27 +53,22 @@ class XDNode {
 class XDTree {
     root:XDNode
     nodesById = new Map<string, XDNode>()
-    constructor(rootId:string) {
-        this.root = new XDNode(rootId)
+    private nodesByElement = new WeakMap<HTMLElement, XDNode>()
+
+    constructor() {
+        this.root = new XDNode()
     }
 
-    /// returns the newly added node
-    add(nodeId:string, parent:XDNode) {
-        const node = new XDNode(nodeId)
-        parent.children.push(node)
-        this.nodesById.set(node.id, node)
+    getForElement(el:HTMLElement) {
+        return this.nodesByElement.get(el)
+    }
+
+    getOrCreateForElement(el:HTMLElement) {
+        let node = this.nodesByElement.get(el)
+        if (node) return node
+        node = new XDNode(el)
+        this.nodesByElement.set(el, node)
         return node
-    }
-
-    remove(nodeId:string, parent:XDNode) {
-        const node = this.nodesById.get(nodeId)
-        if (!node)
-            return
-        const nodeIdx = parent.children.indexOf(node)
-        parent.children.splice(nodeIdx, 1) // thisr removes the whole subtree together with node
-        // will remove the whole subtree from the nodesById map
-        for (const n of XDNode.nodesOfTree(node))
-            this.nodesById.delete(n.id)
     }
 
     // todo: should provide a listener interface for node additon and removal
@@ -62,18 +77,23 @@ class XDTree {
 }
 
 // this tree represents those xdom elements which are attached to the DOM (in the subtree of document.body)
-const onscreenNodes = new XDTree("x-root")
+export const onscreenNodes = new XDTree()
 
 // handling light bindings
 // NOTE: this code refreshes all the light bindings for onscreen nodes in preorder.
 function refreshProps(xdNode:XDNode) {
     xdNode.updateVisible()
     if (!xdNode.visible)
-        return
-    lightBindings.refresh(xdNode.id)
-    for (const child of xdNode.children) {
-        refreshProps(child)
+        return 0
+    let numRefreshed = 0
+    if (xdNode.bindings) {
+        xdNode.bindings.refresh()
+        numRefreshed++
     }
+    for (const child of xdNode.children) {
+        numRefreshed += refreshProps(child)
+    }
+    return numRefreshed
 }
 
 function refresh(time: DOMHighResTimeStamp) {
@@ -99,7 +119,7 @@ function refresh(time: DOMHighResTimeStamp) {
     }
 
     // refresh light bindings
-    refreshProps(onscreenNodes.root)
+    stats.numLightBoundObjects = refreshProps(onscreenNodes.root)
 }
 
 const updates:(()=>any)[] = []
@@ -142,17 +162,17 @@ export function scheduleRecurringUpdate(update:()=>any):Disposable {
 /// getst the closes xdom parent of some element. elParent is already considered for this
 function getXdomParent(elParent:HTMLElement|null) {
     for (; elParent; elParent = elParent.parentElement) {
-        const id = getXdomId(elParent)
-        if (id) return onscreenNodes.nodesById.get(id) as XDNode // NOTE: this should always exist if implememtation is correct    
+        const parentNode = onscreenNodes.getForElement(elParent)
+        if (parentNode) return parentNode
     }
     return onscreenNodes.root
 }
 
 const elementInserted = (element:HTMLElement, xdomParent:XDNode) => {
-    const id = getXdomId(element)
-    if (id) 
-        xdomParent = onscreenNodes.add(id, xdomParent)
-    // check all children elements as well having xdom id
+    const xdNode = onscreenNodes.getForElement(element)
+    if (xdNode) 
+        xdomParent = xdomParent.add(xdNode)
+    // check all children elements as well having xdom nodes, this will rebuild the xdnode tree starting from element
     for (let idx = 0; idx < element.children.length; ++idx) {
         const child = element.children[idx]
         if (child instanceof HTMLElement)
@@ -161,9 +181,9 @@ const elementInserted = (element:HTMLElement, xdomParent:XDNode) => {
 }
 
 const elementRemoved = (element:HTMLElement, xdomParent:XDNode) => {
-    const id = getXdomId(element)
-    if (id) {
-        onscreenNodes.remove(id, xdomParent) // NOTE: this removes all children as well
+    const xdNode = onscreenNodes.getForElement(element)
+    if (xdNode) {
+        xdomParent.remove(xdNode) // NOTE: this removes all children as well
     } else { // have to check children
         for (let idx = 0; idx < element.children.length; ++idx) {
             const child = element.children[idx]
@@ -243,7 +263,7 @@ export function disposeTree(root:Element) {
 // Statistics  ------------------------------------------------------------------------------------------------
 export const stats = {
     timestamp: 0, ///< the current timestamp, it can be used in calculations to update something continously (like modulate the colors etc.)
-    numLightBoundObjects: lightBindings.bindings.size,
+    numLightBoundObjects: 0,
     numRecurringUpdates: recurring.length,
     fps: 60,
 }

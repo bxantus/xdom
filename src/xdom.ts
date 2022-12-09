@@ -3,8 +3,8 @@ export { dispose, make } from "./dispose.ts"
 export { calc, type KeysMatching } from "./binding/lightBinding.ts"
 export { disposeTree, registerDisposer } from "./domChanges.ts"
 // DOM related utility library
-import { calcCustomProperty, calcProperty, type KeysMatching, CalculatedValue } from "./binding/lightBinding.ts"
-import { lightBindings, startObservingChanges } from "./domChanges.ts"
+import { type KeysMatching, CalculatedValue } from "./binding/lightBinding.ts"
+import { onscreenNodes, startObservingChanges } from "./domChanges.ts"
 
 type TagNames = keyof HTMLElementTagNameMap
 export type CalcOrValue<T> = T | CalculatedValue<T>
@@ -41,15 +41,9 @@ export function el<K extends TagNames>(tagname:K, props?:ElementProps<HTMLElemen
         element.onclick = ev => props.onClick!.call(result, ev)
     if (props?.visible != undefined) {
         if (props.visible instanceof CalculatedValue) {
-            // NOTE: attaches a custom computed property to this element which has it's own getter/setter
-            //       when the tree is diposed this lightbinding with the customProperty holder will be removed from lightBindings
-            const visibilityUpdater = {
-                name: "visible",
-                visible: true,
-                get() { return this.visible },
-                set(v:boolean) { this.visible = v; v ? show(element) : hide(element) }
-            }
-            calcCustomProperty(getOrCreateXdomId(element), element, visibilityUpdater, props.visible, lightBindings)
+            // NOTE: visible binding is special, it should be set on the custom visibleBinding prop on the associated xdNode
+            const xdNode = onscreenNodes.getOrCreateForElement(element)
+            xdNode.visibleBinding = { prop: "visible", calc: props.visible } 
         } else if (!props.visible) hide()
     }
     
@@ -150,24 +144,12 @@ export function option(props:OptionProps, ...children:Children) {
     return element
 }
 
-export function getXdomId(element:HTMLElement) {
-    return element.dataset.xdomId
-}
-
-let nextId = 1
-function getOrCreateXdomId(element:HTMLElement) {
-    if (!element.dataset.xdomId) {
-        element.dataset.xdomId = `x-${nextId++}`
-        // todo: should add element to the finalization registry of domChanges, so it can cleanup
-        //       after dom elements are garbage collected
-    }
-    return element.dataset.xdomId
-}
-
 function setProperty<Target extends HTMLElement, V>(obj:Target, prop:KeysMatching<Target, V>, val:PropertyValue<V>) {
     if (val instanceof CalculatedValue) {
-        const xdomId = getOrCreateXdomId(obj)
-        calcProperty(xdomId, obj, prop, val, lightBindings)
+        /// @ts-ignore: obj[prop] is perfectly valid, as prop is guaranteed to be some prop of obj (maybe not true for readonly)    
+        obj[prop] = val.compute()
+        const xdNode = onscreenNodes.getOrCreateForElement(obj);
+        xdNode.bindings!.bindings.push( { prop, calc:val })
     }
     /// @ts-ignore: obj[prop] is perfectly valid, as prop is guaranteed to be some prop of obj (maybe not true for readonly)    
     else obj[prop] = val 

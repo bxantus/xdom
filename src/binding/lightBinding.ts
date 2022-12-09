@@ -25,7 +25,7 @@ export interface LightBinding<T> {
     calc:CalculatedValue<T>
 }
 
-class BindingsForObject<T extends object, V> {
+export class BindingsForObject<T extends object, V> {
     objRef:WeakRef<T>
     bindings:LightBinding<V>[] = []
     constructor(obj:T, firstBinding?:LightBinding<V>) {
@@ -33,34 +33,13 @@ class BindingsForObject<T extends object, V> {
         if (firstBinding)
             this.bindings.push(firstBinding)
     }
-}
 
-export class Repository {
-    bindings = new Map<string, BindingsForObject<any, any>>()
-
-    add<T>(objId:string, obj:any, prop:string|symbol|number|CustomProperty<T>, calc:CalculatedValue<T>|undefined) {
-        if (!calc) return
-        const bindingsForObj = this.bindings.get(obj)
-        const binding:LightBinding<T> = { prop, calc }
-        if (!bindingsForObj) {
-            this.bindings.set(objId, new BindingsForObject(obj, binding))
-        } else bindingsForObj.bindings.push(binding)
-        return binding
-    }
-
-    clearForObjectId(objId:string) {
-        this.bindings.delete(objId)
-    }
-
-    has(objId:string) { return this.bindings.has(objId) }
-
-    // refreshes all calculated bindings for object identified by objId
-    refresh(objId:string) {
-        const bindingsForObj = this.bindings.get(objId)
+    // refreshes all calculated bindings for objRef (if it's still alive)
+    refresh() {
         // get object from weakref if possible
-        const obj = bindingsForObj?.objRef.deref()
-        if (!obj || !bindingsForObj) return
-        for (const lb of bindingsForObj?.bindings) {
+        const obj = this.objRef.deref()
+        if (!obj) return
+        for (const lb of this.bindings) {
             updatePropValue(obj, lb)
         }
     }
@@ -76,12 +55,3 @@ function updatePropValue<T>(obj:any, lb:LightBinding<T>) {
         obj[lb.prop] = newVal 
 }
 
-export function calcProperty<Target, V>(objectId:string, obj:Target, prop:KeysMatching<Target, V>, calc:CalculatedValue<V>, repo?:Repository) {
-    (obj as any)[prop] = calc.compute()
-    repo?.add(objectId, obj, prop, calc)
-}
-
-export function calcCustomProperty<Target, V>(objectId:string, obj:Target, customProp:CustomProperty<V>, calc:CalculatedValue<V>, repo?:Repository) {
-    updatePropValue(obj, { prop:customProp, calc })
-    repo?.add(objectId, obj, customProp, calc)
-}
