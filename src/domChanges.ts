@@ -139,7 +139,9 @@ class XDTree {
 }
 
 // this tree represents those xdom elements which are attached to the DOM (in the subtree of document.body)
-export const onscreenNodes = new XDTree()
+const onscreenNodes = new XDTree()
+
+export const getOrCreateXdNodeForElement= (el:HTMLElement) => onscreenNodes.getOrCreateForElement(el)
 
 // handling light bindings
 // NOTE: this code refreshes all the light bindings for onscreen nodes in preorder.

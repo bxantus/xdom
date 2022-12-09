@@ -3,7 +3,7 @@ export { dispose, make } from "./dispose.ts"
 export { calc, type KeysMatching } from "./binding/lightBinding.ts"
 // DOM related utility library
 import { type KeysMatching, CalculatedValue } from "./binding/lightBinding.ts"
-import { onscreenNodes, startObservingChanges } from "./domChanges.ts"
+import { getOrCreateXdNodeForElement, startObservingChanges } from "./domChanges.ts"
 
 type TagNames = keyof HTMLElementTagNameMap
 export type CalcOrValue<T> = T | CalculatedValue<T>
@@ -36,7 +36,7 @@ export interface XDListener {
 }
 
 export function attachXdomListenerTo(element:HTMLElement, listener:XDListener) {
-    const xdNode = onscreenNodes.getOrCreateForElement(element)
+    const xdNode = getOrCreateXdNodeForElement(element)
     xdNode.addListener(listener)
 }
 
@@ -56,7 +56,7 @@ export function el<K extends TagNames>(tagname:K, props?:ElementProps<HTMLElemen
     if (props?.visible != undefined) {
         if (props.visible instanceof CalculatedValue) {
             // NOTE: visible binding is special, it should be set on the custom visibleBinding prop on the associated xdNode
-            const xdNode = onscreenNodes.getOrCreateForElement(element)
+            const xdNode = getOrCreateXdNodeForElement(element)
             xdNode.visibleBinding = { prop: "visible", calc: props.visible } 
             xdNode.updateVisible() // make sure that the visibility field is refreshed right away, and the elements get hidden when visibility is false
         } else if (!props.visible) hide()
@@ -163,7 +163,7 @@ function setProperty<Target extends HTMLElement, V>(obj:Target, prop:KeysMatchin
     if (val instanceof CalculatedValue) {
         /// @ts-ignore: obj[prop] is perfectly valid, as prop is guaranteed to be some prop of obj (maybe not true for readonly)    
         obj[prop] = val.compute()
-        const xdNode = onscreenNodes.getOrCreateForElement(obj);
+        const xdNode = getOrCreateXdNodeForElement(obj);
         xdNode.bindings!.bindings.push( { prop, calc:val })
     }
     /// @ts-ignore: obj[prop] is perfectly valid, as prop is guaranteed to be some prop of obj (maybe not true for readonly)    
