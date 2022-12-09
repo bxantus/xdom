@@ -132,10 +132,6 @@ class XDTree {
         this.nodesByElement.set(el, node)
         return node
     }
-
-    // todo: should provide a listener interface for node additon and removal
-    //       as associated resources and components can update there: stop listening for events
-    //       and also release, gather associated resources
 }
 
 // this tree represents those xdom elements which are attached to the DOM (in the subtree of document.body)
