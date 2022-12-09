@@ -2,21 +2,43 @@
 // If you use xdom, change detection will be activated automatically by it
 import { BindingsForObject, LightBinding } from "./binding/lightBinding.ts"
 import { Disposable } from "./dispose.ts";
-import { XDListener } from "./xdom.ts";
+import { hide, show, XDListener } from "./xdom.ts";
 
 
 /// XDOM Node
 class XDNode {
-    private isVisible = true
+    private isVisible = true    // current effective visibility
     private isConnected = false // becomes true when the associated element will be attached to the DOM
     // if this node has an associated visible binding, it can be checked and refreshed here
     visibleBinding?:LightBinding<boolean>
     bindings?:BindingsForObject<HTMLElement, any>
     
     get visible() { return this.isVisible }
+    
     updateVisible() {
-        if (!this.visibleBinding) return
-        this.isVisible = this.visibleBinding.calc.compute()
+        const oldVisible = this.isVisible
+        if (!this.visibleBinding) {
+            this.isVisible = true // may have been part of an invisible subtree previously
+        } else this.isVisible = this.visibleBinding.calc.compute()
+        
+        if (oldVisible == this.isVisible) return 
+        // visibility has been changed
+        if (this.isVisible) {
+            this.connected()
+        } else {
+            // invisible subtree. NOTE: this only happens for nodes with visibleBindings attached to them
+            // we will act if the node gets disconnected with the whole subtree from the DOM
+            for (const node of XDNode.nodesOfTree(this)) {
+                node.isVisible = false
+                node.disconnected()
+            }
+        }
+        if (this.visibleBinding) { // show/hide should be called only for elements with visible bindings, html takes care of the rest of hiding/showing the subtree
+            const element = this.bindings?.objRef.deref()
+            if (!element) return
+            if (this.isVisible) show(element)
+            else hide(element)
+        }
     }
 
     listeners?:XDListener[]
@@ -39,7 +61,10 @@ class XDNode {
     /// returns the newly added node
     addChild(node:XDNode) {
         this.children.push(node)
-        node.connected()
+        if (!this.isVisible)
+            node.isVisible = false // when this node is hidden it updates the effective visibility of the child
+        else if (node.isVisible) // only visible nodes get connected
+            node.connected()
         return node
     }
 
@@ -69,6 +94,7 @@ class XDNode {
 
     /// called when this xdnode is connected to the DOM
     private connected() {
+        if (this.isConnected) return
         this.isConnected = true
         if (!this.listeners) return
         for (const l of this.listeners)
@@ -77,6 +103,7 @@ class XDNode {
 
     /// called when this xdnode is disconnected from the DOM
     private disconnected() {
+        if (!this.isConnected) return
         this.isConnected = false
         if (!this.listeners) return
         for (const l of this.listeners)

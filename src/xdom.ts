@@ -58,6 +58,7 @@ export function el<K extends TagNames>(tagname:K, props?:ElementProps<HTMLElemen
             // NOTE: visible binding is special, it should be set on the custom visibleBinding prop on the associated xdNode
             const xdNode = onscreenNodes.getOrCreateForElement(element)
             xdNode.visibleBinding = { prop: "visible", calc: props.visible } 
+            xdNode.updateVisible() // make sure that the visibility field is refreshed right away, and the elements get hidden when visibility is false
         } else if (!props.visible) hide()
     }
     
