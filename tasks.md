@@ -1,4 +1,4 @@
-## Preparing for 1.0 release
+## Would be nice for the post 1.0 release
 - Add more props and event handlers to the element interface (could scan draw&show also dom.d.ts for other props and events)
 - Clean up listItems interface
   - it should accept arrays of items, not just observable list
