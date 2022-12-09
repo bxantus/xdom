@@ -1,6 +1,6 @@
 // This module handles changes in the dom coming from recurring computations, light bindings, bindings and list changes
 // If you use xdom, change detection will be activated automatically by it
-import { Repository as LightBindings } from "./binding/lightBinding.ts"
+import { LightBinding, Repository as LightBindings } from "./binding/lightBinding.ts"
 import { Disposable } from "./dispose.ts";
 import { getXdomId } from "./xdom.ts";
 
@@ -8,8 +8,15 @@ export const lightBindings = new LightBindings()
 
 /// XDOM Node
 class XDNode {
-    // TODO: we could refresh visible property directly here
-    //       by having that we could optimize in the traversal, skipping children and props of this node
+    // if this node has an associated visible binding, it can be checked and refreshed here
+    visibleBinding?:LightBinding<boolean>
+    private isVisible = true
+    get visible() { return this.isVisible }
+    updateVisible() {
+        if (!this.visibleBinding) return
+        this.isVisible = this.visibleBinding.calc.compute()
+    }
+
     children:XDNode[] = []
     constructor(public id:string) {}
     
@@ -58,10 +65,15 @@ class XDTree {
 const onscreenNodes = new XDTree("x-root")
 
 // handling light bindings
-function refreshProps() {
-    // NOTE: this code refreshes all the light bindings for onscreen nodes in preorder.
-    for (const xdNode of XDNode.nodesOfTree(onscreenNodes.root))
-        lightBindings.refresh(xdNode.id)
+// NOTE: this code refreshes all the light bindings for onscreen nodes in preorder.
+function refreshProps(xdNode:XDNode) {
+    xdNode.updateVisible()
+    if (!xdNode.visible)
+        return
+    lightBindings.refresh(xdNode.id)
+    for (const child of xdNode.children) {
+        refreshProps(child)
+    }
 }
 
 function refresh(time: DOMHighResTimeStamp) {
@@ -87,7 +99,7 @@ function refresh(time: DOMHighResTimeStamp) {
     }
 
     // refresh light bindings
-    refreshProps()
+    refreshProps(onscreenNodes.root)
 }
 
 const updates:(()=>any)[] = []
