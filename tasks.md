@@ -1,6 +1,4 @@
 ## Preparing for 1.0 release
-- Finish `visible` handling _(OPTIONAL as interfaces won't be harmed)_: currently it is working fine, but invisible parts of the dom should have their bindings turned off
-  except for the current visible binding
 - Experiment with element/component insertion and deletion from the dom. They should be deactivated and activated. This is related to the visibility handling task!
 - Be sure to attach component object to the underlying html element, via data prop, or a map, so the component can be removed when needed
 - Add more props and event handlers to the element interface (could scan draw&show also dom.d.ts for other props and events)

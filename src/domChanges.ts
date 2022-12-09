@@ -52,7 +52,6 @@ class XDNode {
 /// also the nodes are organized in a tree aiding traversal when evaluating bindings
 class XDTree {
     root:XDNode
-    nodesById = new Map<string, XDNode>()
     private nodesByElement = new WeakMap<HTMLElement, XDNode>()
 
     constructor() {
@@ -274,7 +273,6 @@ const fpsWindowSize = 200 // will update fps each 200 ms
 
 function updateStats(timestamp:number) {
     stats.timestamp = timestamp
-    stats.numLightBoundObjects = onscreenNodes.nodesById.size
     stats.numRecurringUpdates = recurring.length
     
     if (fpsWindowStart === undefined) {
