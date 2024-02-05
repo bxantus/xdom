@@ -7,7 +7,9 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "sample-greeter": "tsup --sourcemap -d samples/out samples/greeter.ts",
+    "sample-inventory": "tsup --sourcemap -d samples/out samples/inventory.ts"
   },
   "repository": {
     "type": "git",
@@ -20,6 +22,7 @@
   },
   "homepage": "https://github.com/bxantus/xdom#readme",
   "devDependencies": {
+    "tsup": "^8.0.1",
     "typescript": "^5.3.3"
   }
 }
