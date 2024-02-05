@@ -1,0 +1,25 @@
+{
+  "name": "xdom",
+  "version": "1.0.0",
+  "description": "Easy to use front-end typescript library for creating user interfaces",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bxantus/xdom.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bxantus/xdom/issues"
+  },
+  "homepage": "https://github.com/bxantus/xdom#readme",
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

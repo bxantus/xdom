@@ -1,5 +1,6 @@
 {
-    "deno.enable": true,
+    "deno.enable": false,
     "deno.config": "./src/deno.jsonc",
-    "deno.lint": false
+    "deno.lint": false,
+    "typescript.tsdk": "node_modules\\typescript\\lib"
 }
