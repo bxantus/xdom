@@ -2,21 +2,22 @@
   "name": "xdom",
   "version": "1.0.0",
   "description": "Easy to use front-end typescript library for creating user interfaces",
-  "main": "index.js",
-  "directories": {
-    "test": "tests"
-  },
+  "main": "dist/xdom.js",
+  "types": "dist/xdom.d.ts",
+  "files": ["dist"],
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "sample-greeter": "tsup --sourcemap -d samples/out samples/greeter.ts",
-    "sample-inventory": "tsup --sourcemap -d samples/out samples/inventory.ts"
+    "sample-inventory": "tsup --sourcemap -d samples/out samples/inventory.ts",
+    "dist": "tsup --sourcemap --dts --format esm -d dist src/xdom.ts"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bxantus/xdom.git"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/bxantus/xdom/issues"
   },
