@@ -59,7 +59,7 @@ export function el<K extends TagNames>(tagname:K, props?:ElementProps<HTMLElemen
             const xdNode = getOrCreateXdNodeForElement(element)
             xdNode.visibleBinding = { prop: "visible", calc: props.visible } 
             xdNode.updateVisible() // make sure that the visibility field is refreshed right away, and the elements get hidden when visibility is false
-        } else if (!props.visible) hide()
+        } else if (!props.visible) hide(element)
     }
     
     if (children) {
